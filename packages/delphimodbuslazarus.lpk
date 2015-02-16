@@ -1,0 +1,69 @@
+<?xml version="1.0"?>
+<CONFIG>
+  <Package Version="3">
+    <PathDelim Value="\"/>
+    <Name Value="DelphiModbusLazarus"/>
+    <Author Value="P.L. Polak"/>
+    <CompilerOptions>
+      <Version Value="8"/>
+      <PathDelim Value="\"/>
+      <SearchPaths>
+        <OtherUnitFiles Value="..\source\"/>
+        <UnitOutputDirectory Value="lib\$(TargetCPU)-$(TargetOS)"/>
+      </SearchPaths>
+      <Other>
+        <CompilerPath Value="$(CompPath)"/>
+      </Other>
+    </CompilerOptions>
+    <Description Value="Delphi Modbus library"/>
+    <Version Major="1" Minor="4"/>
+    <Files Count="7">
+      <Item1>
+        <Filename Value="..\source\IdModbusClient.pas"/>
+        <UnitName Value="IdModbusClient"/>
+      </Item1>
+      <Item2>
+        <Filename Value="..\source\ModbusUtils.pas"/>
+        <UnitName Value="ModbusUtils"/>
+      </Item2>
+      <Item3>
+        <Filename Value="..\source\ModbusTypes.pas"/>
+        <UnitName Value="ModbusTypes"/>
+      </Item3>
+      <Item4>
+        <Filename Value="..\source\ModbusStrConsts.pas"/>
+        <UnitName Value="ModbusStrConsts"/>
+      </Item4>
+      <Item5>
+        <Filename Value="..\source\ModbusConsts.pas"/>
+        <UnitName Value="ModbusConsts"/>
+      </Item5>
+      <Item6>
+        <Filename Value="..\source\IdModbusServer.pas"/>
+        <UnitName Value="IdModbusServer"/>
+      </Item6>
+      <Item7>
+        <Filename Value="..\source\ModbusReg.pas"/>
+        <HasRegisterProc Value="True"/>
+        <UnitName Value="ModbusReg"/>
+      </Item7>
+    </Files>
+    <Type Value="RunAndDesignTime"/>
+    <RequiredPkgs Count="2">
+      <Item1>
+        <PackageName Value="pl_indycomp"/>
+      </Item1>
+      <Item2>
+        <PackageName Value="FCL"/>
+        <MinVersion Major="1" Valid="True"/>
+      </Item2>
+    </RequiredPkgs>
+    <UsageOptions>
+      <UnitPath Value="$(PkgOutDir)\"/>
+    </UsageOptions>
+    <PublishOptions>
+      <Version Value="2"/>
+      <IgnoreBinaries Value="False"/>
+    </PublishOptions>
+  </Package>
+</CONFIG>

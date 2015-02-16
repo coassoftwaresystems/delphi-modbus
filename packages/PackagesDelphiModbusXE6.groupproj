@@ -1,0 +1,48 @@
+﻿<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+    <PropertyGroup>
+        <ProjectGuid>{34619982-7D8C-4335-B3B5-9241265188CA}</ProjectGuid>
+    </PropertyGroup>
+    <ItemGroup>
+        <Projects Include="DelphiModbusXE6.dproj">
+            <Dependencies/>
+        </Projects>
+        <Projects Include="dclDelphiModbusXE6.dproj">
+            <Dependencies/>
+        </Projects>
+    </ItemGroup>
+    <ProjectExtensions>
+        <Borland.Personality>Default.Personality.12</Borland.Personality>
+        <Borland.ProjectType/>
+        <BorlandProject>
+            <Default.Personality/>
+        </BorlandProject>
+    </ProjectExtensions>
+    <Target Name="DelphiModbusXE6">
+        <MSBuild Projects="DelphiModbusXE6.dproj"/>
+    </Target>
+    <Target Name="DelphiModbusXE6:Clean">
+        <MSBuild Projects="DelphiModbusXE6.dproj" Targets="Clean"/>
+    </Target>
+    <Target Name="DelphiModbusXE6:Make">
+        <MSBuild Projects="DelphiModbusXE6.dproj" Targets="Make"/>
+    </Target>
+    <Target Name="dclDelphiModbusXE6">
+        <MSBuild Projects="dclDelphiModbusXE6.dproj"/>
+    </Target>
+    <Target Name="dclDelphiModbusXE6:Clean">
+        <MSBuild Projects="dclDelphiModbusXE6.dproj" Targets="Clean"/>
+    </Target>
+    <Target Name="dclDelphiModbusXE6:Make">
+        <MSBuild Projects="dclDelphiModbusXE6.dproj" Targets="Make"/>
+    </Target>
+    <Target Name="Build">
+        <CallTarget Targets="DelphiModbusXE6;dclDelphiModbusXE6"/>
+    </Target>
+    <Target Name="Clean">
+        <CallTarget Targets="DelphiModbusXE6:Clean;dclDelphiModbusXE6:Clean"/>
+    </Target>
+    <Target Name="Make">
+        <CallTarget Targets="DelphiModbusXE6:Make;dclDelphiModbusXE6:Make"/>
+    </Target>
+    <Import Project="$(BDS)\Bin\CodeGear.Group.Targets" Condition="Exists('$(BDS)\Bin\CodeGear.Group.Targets')"/>
+</Project>

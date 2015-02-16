@@ -1,0 +1,44 @@
+﻿<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <ProjectGuid>{42251e47-55bf-4f8f-b68f-d12ae186773b}</ProjectGuid>
+  </PropertyGroup>
+  <ItemGroup />
+  <ItemGroup>
+    <Projects Include="dclDelphiModbus2007.dproj" />
+    <Projects Include="DelphiModbus2007.dproj" />
+  </ItemGroup>
+  <ProjectExtensions>
+    <Borland.Personality>Default.Personality</Borland.Personality>
+    <Borland.ProjectType />
+    <BorlandProject>
+  <BorlandProject xmlns=""> <Default.Personality> </Default.Personality> </BorlandProject></BorlandProject>
+  </ProjectExtensions>
+  <Target Name="DelphiModbus2007">
+    <MSBuild Projects="DelphiModbus2007.dproj" Targets="" />
+  </Target>
+  <Target Name="DelphiModbus2007:Clean">
+    <MSBuild Projects="DelphiModbus2007.dproj" Targets="Clean" />
+  </Target>
+  <Target Name="DelphiModbus2007:Make">
+    <MSBuild Projects="DelphiModbus2007.dproj" Targets="Make" />
+  </Target>
+  <Target Name="dclDelphiModbus2007">
+    <MSBuild Projects="dclDelphiModbus2007.dproj" Targets="" />
+  </Target>
+  <Target Name="dclDelphiModbus2007:Clean">
+    <MSBuild Projects="dclDelphiModbus2007.dproj" Targets="Clean" />
+  </Target>
+  <Target Name="dclDelphiModbus2007:Make">
+    <MSBuild Projects="dclDelphiModbus2007.dproj" Targets="Make" />
+  </Target>
+  <Target Name="Build">
+    <CallTarget Targets="DelphiModbus2007;dclDelphiModbus2007" />
+  </Target>
+  <Target Name="Clean">
+    <CallTarget Targets="DelphiModbus2007:Clean;dclDelphiModbus2007:Clean" />
+  </Target>
+  <Target Name="Make">
+    <CallTarget Targets="DelphiModbus2007:Make;dclDelphiModbus2007:Make" />
+  </Target>
+  <Import Condition="Exists('$(MSBuildBinPath)\Borland.Group.Targets')" Project="$(MSBuildBinPath)\Borland.Group.Targets" />
+</Project>

@@ -1,0 +1,62 @@
+﻿	<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+		<PropertyGroup>
+			<ProjectGuid>{CF3744DA-2390-453E-855A-F1463A038582}</ProjectGuid>
+		</PropertyGroup>
+		<ItemGroup>
+			<Projects Include="Master\ModbusMaster.dproj">
+				<Dependencies/>
+			</Projects>
+			<Projects Include="Slave\ModbusSlave.dproj">
+				<Dependencies/>
+			</Projects>
+		</ItemGroup>
+		<ProjectExtensions>
+			<Borland.Personality>Default.Personality.12</Borland.Personality>
+			<Borland.ProjectType/>
+			<BorlandProject>
+				<Default.Personality/>
+			</BorlandProject>
+		</ProjectExtensions>
+		<Target Name="ModbusMaster">
+			<MSBuild Projects="Master\ModbusMaster.dproj"/>
+		</Target>
+		<Target Name="ModbusMaster:Clean">
+			<MSBuild Projects="Master\ModbusMaster.dproj" Targets="Clean"/>
+		</Target>
+		<Target Name="ModbusMaster:Make">
+			<MSBuild Projects="Master\ModbusMaster.dproj" Targets="Make"/>
+		</Target>
+		<Target Name="ModbusSlave">
+			<MSBuild Projects="Slave\ModbusSlave.dproj"/>
+		</Target>
+		<Target Name="ModbusSlave:Clean">
+			<MSBuild Projects="Slave\ModbusSlave.dproj" Targets="Clean"/>
+		</Target>
+		<Target Name="ModbusSlave:Make">
+			<MSBuild Projects="Slave\ModbusSlave.dproj" Targets="Make"/>
+		</Target>
+		<Target Name="Build">
+			<CallTarget Targets="ModbusMaster;ModbusSlave"/>
+		</Target>
+		<Target Name="Clean">
+			<CallTarget Targets="ModbusMaster:Clean;ModbusSlave:Clean"/>
+		</Target>
+		<Target Name="Make">
+			<CallTarget Targets="ModbusMaster:Make;ModbusSlave:Make"/>
+		</Target>
+		<Import Condition="Exists('$(BDS)\Bin\CodeGear.Group.Targets')" Project="$(BDS)\Bin\CodeGear.Group.Targets"/>
+		<ItemGroup Condition="'$(BuildGroup)'=='All'">
+			<BuildGroupProject Include="Master\ModbusMaster.dproj">
+				<ProjectGuid>{9F2ABEE0-669F-45AD-A4E0-2A13458770EA}</ProjectGuid>
+				<Configurations>Debug</Configurations>
+				<Platforms>Win32</Platforms>
+				<Enabled>True</Enabled>
+			</BuildGroupProject>
+			<BuildGroupProject Include="Slave\ModbusSlave.dproj">
+				<ProjectGuid>{46952E22-D5FD-49B8-BBD2-63F51FA0DF2B}</ProjectGuid>
+				<Configurations>Debug</Configurations>
+				<Platforms>Win32</Platforms>
+				<Enabled>True</Enabled>
+			</BuildGroupProject>
+		</ItemGroup>
+	</Project>

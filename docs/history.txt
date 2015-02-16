@@ -1,0 +1,161 @@
+Version 1.6.? -
+===============================
+- Fix: TIdModbusServer did nog allow access to the last register of the
+  configured range (MaxRegister property).
+
+Version 1.6.3 - October 7, 2014
+===============================
+- Added support for Delphi XE7.
+
+Version 1.6.2 - April 16, 2014
+==============================
+- Added support for Delphi XE6.
+- Added missing component flags to enable design-time use of the components
+  in mobile targets (iOS and Android).
+
+Version 1.6.1 - October 15, 2013
+================================
+- Added support for Delphi XE5 (including Android targets).
+
+Version 1.6.0 - May 10, 2013
+============================
+- Added support for Delphi XE4 (including support for Delphi mobile).
+- Added missing function 'WriteOneCoil' in TIdModbusServer.
+
+Version 1.5.2 - November 23, 2012
+=================================
+- Added support for Delphi XE3.
+
+Version 1.5.1 - March 27, 2012
+==============================
+- Fix problem in the Lazarus/FPC implementation with the Swap function.
+- Fix problem with error handling in TIdModbusServer.
+
+Version 1.5.0 - September 1, 2011
+=================================
+- Events in TIdModbusServer now can return an error code to the Modbus master
+  which executed the request.
+- Added new property 'BaseRegister' to both TIdModbusServer and TIdModbusClient
+  to address issues with equipment not using 1-based register numbers.
+- Added support for Delphi XE2 (supporting Win32, Win64 and Mac OS X).
+- Added new demos for the new cross-platform FireMonkey framework, which run on
+  Win32, Win64 and Mac OS X.
+- Fix: When an error was received from a Modbus device, the error code was not
+  returned correctly in both TIdModbusClient and TIdModbusServer.
+
+Version 1.4.0 - August 31, 2010
+===============================
+- Added support for FreePascal (FPC) and add a Lazarus IDE package.
+- Added new functions to TIdModbusClient:
+    ReadDouble, ReadDWord, ReadSingle, WriteDWord.
+- Changed method signature of Read.... methods in TIdModbusClient, to avoid
+  compiler warnings.
+- Fix: array out of bounds error when reading or writing coils and the amount is
+  not a multiple of 8.
+- Fix: Check if connection is available before sending a command from
+  TIdModbusClient.
+- Fix: Modbus slave demo should use 1-based register numbers by default.
+- Update README documentation about compiling and running the included demos.
+- Added support for Delphi XE.
+
+Version 1.3.1 - May 18, 2010
+============================
+- Fix CPU going to 100% in TIdModbusServer when using on Indy 10.
+- Update README documentation about installation issues on Delphi 2005.
+
+Version 1.3.0 - May 6, 2010
+===========================
+- Added new functions to TIdModbusClient:
+    ReadInputBits, ReadString, WriteDouble, WriteSingle
+- Added support for Read/WriteCoil and ReadInputBits in TIdModbusServer.
+- Added new property to TIdModbusServer: UnitID.
+- Changed default value for TIdModbusClient.UnitID to 255.
+- Code refactored to share code between TIdModbusClient and TIdModbusServer.
+- Added RequestBuffer/ResponseBuffer argument to most events in TIdModbusClient
+  and TIdModbusServer, to give access to the complete Modbus package.
+- Updated demos to use new event signatures.
+- Fix: include ModbusSplash.res in distribution .zip file (missing in previous
+  version).
+- Fix: unit ModbusServer fails to compile when using Indy 9.
+
+Version 1.2.0 - February 11, 2010
+=================================
+- Added new events to TIdModbusClient: OnResponseError, OnResponseMismatch.
+- Added communication logging support to TIdModbusServer.
+- Renamed Execute method in TIdModbusServer to SendCommand.
+- Fixed incorrect record length in response packages from TIdModbusServer.
+- Fixed some concurrency problems with use of internal buffers.
+- Always initialize buffers with 0 before use.
+- Ensure each transaction initiated by TIdModbusClient gets a unique ID.
+
+Version 1.1.0 beta - February 5, 2010
+=====================================
+- Several Indy 10 related fixes (bduncanj).
+- Add new properties and methods to TIdModbusClient:
+  - AutoConnect           - Should each read/write operation do a (Dis-)Connect
+  - WriteString           - To write a String to the PLC.
+  - ReadCoil, ReadCoils   - Read single coils from the PLC (lemerou).
+  - WriteCoil, WriteCoils - Write single coils to the PLC (lemerou).
+  - ReadHoldingRegisters  - Replaces the existing ReadRegisters function.
+  - ReadInputRegisters    - Read input registers from the PLC.
+- Changed property names in TIdModbusServer:
+  - MinRegister, MaxRegister - Replacing the old RefNumber and Range properties.
+- Add support for ReadInputRegisters to TIdModbusServer.
+- Improved error handling in Modbus protocol implementation of TIdModbusServer.
+- Added support for Delphi 2010.
+
+Version 1.0.1 - October 6, 2008
+===============================
+- Add message in splash screen of Delphi 2005/2006/2007/2009 IDE during startup.
+- Add support for Delphi 2009.
+
+Version 1.0.0 - June 27, 2007
+=============================
+- Add support for Indy version 10 components.
+- Add support for Delphi 2005, 2006 and 2007.
+- First stable release.
+
+Version 0.3.1 - July 16, 2004
+=============================
+- Add fixes from Warren Postma:
+  - Add new property 'OneShotConnection' to TIdModbusServer. When set then the
+    server will disconnect after every client request.
+  - Add new public property 'Pause' to TIdModbusServer. Use it to pause the server
+    operation, e.g. to avoid access violations when terminating the program.
+  - Extended slave/server demo program.
+- Link About dialog to version property.
+- Fix: when reading server register 0, the event handler incorrectly passed
+  register nr. 65536 to the program.
+
+Version 0.3.0 - February 12, 2004
+=================================
+- Add support for property categories on Delphi 6 and up.
+- Add project group for all demos.
+- Convert string constants into resource strings, to enable localization.
+- Fix: Calling the About dialog no longer jumps to default event handler.
+- Add read/only version property to components.
+- About box now contains a link to the project's homepage on SourceForge.net.
+
+Version 0.2.5 - January 8, 2004
+===============================
+- Add sample program to demonstrate a simple Modbus slave implementation.
+- Add this version history log.
+- Add readme document with a short introduction to the package.
+- Add license text document.
+- Add default values to property declarations.
+- Implementation of WriteOneReg ModBus function in TIdModbusServer component.
+
+Version 0.2.0 - January 1, 2004
+===============================
+- Add about box to all designtime components.
+- Add sample program to demonstrate a simple Modbus master implementation.
+- Add UnitID property to client component.
+- Fix several bugs causing access violations in the server component.
+- Several code cleanups to make it (look) more consistent.
+
+Version 0.1.0 - July 15, 2003
+=============================
+- Initial release of a Modbus slave and master for Delphi.
+
+--------------------------------------------------------------------------------
+$Id: history.txt,v 1.65 2014/10/07 13:48:28 plpolak Exp $

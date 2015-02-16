@@ -1,0 +1,48 @@
+﻿	<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+		<PropertyGroup>
+			<ProjectGuid>{34619982-7D8C-4335-B3B5-9241265188CA}</ProjectGuid>
+		</PropertyGroup>
+		<ItemGroup>
+			<Projects Include="DelphiModbusXE3.dproj">
+				<Dependencies/>
+			</Projects>
+			<Projects Include="dclDelphiModbusXE3.dproj">
+				<Dependencies>DelphiModbusXE3.dproj</Dependencies>
+			</Projects>
+		</ItemGroup>
+		<ProjectExtensions>
+			<Borland.Personality>Default.Personality.12</Borland.Personality>
+			<Borland.ProjectType/>
+			<BorlandProject>
+				<Default.Personality/>
+			</BorlandProject>
+		</ProjectExtensions>
+		<Target Name="DelphiModbusXE3">
+			<MSBuild Projects="DelphiModbusXE3.dproj"/>
+		</Target>
+		<Target Name="DelphiModbusXE3:Clean">
+			<MSBuild Projects="DelphiModbusXE3.dproj" Targets="Clean"/>
+		</Target>
+		<Target Name="DelphiModbusXE3:Make">
+			<MSBuild Projects="DelphiModbusXE3.dproj" Targets="Make"/>
+		</Target>
+		<Target Name="dclDelphiModbusXE3" DependsOnTargets="DelphiModbusXE3">
+			<MSBuild Projects="dclDelphiModbusXE3.dproj"/>
+		</Target>
+		<Target Name="dclDelphiModbusXE3:Clean" DependsOnTargets="DelphiModbusXE:Clean">
+			<MSBuild Projects="dclDelphiModbusXE3.dproj" Targets="Clean"/>
+		</Target>
+		<Target Name="dclDelphiModbusXE3:Make" DependsOnTargets="DelphiModbusXE3:Make">
+			<MSBuild Projects="dclDelphiModbusXE3.dproj" Targets="Make"/>
+		</Target>
+		<Target Name="Build">
+			<CallTarget Targets="DelphiModbusXE3;dclDelphiModbusXE3"/>
+		</Target>
+		<Target Name="Clean">
+			<CallTarget Targets="DelphiModbusXE3:Clean;dclDelphiModbusXE3:Clean"/>
+		</Target>
+		<Target Name="Make">
+			<CallTarget Targets="DelphiModbusXE3:Make;dclDelphiModbusXE3:Make"/>
+		</Target>
+		<Import Condition="Exists('$(BDS)\Bin\CodeGear.Group.Targets')" Project="$(BDS)\Bin\CodeGear.Group.Targets"/>
+	</Project>

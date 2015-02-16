@@ -1,0 +1,134 @@
+object frmMain: TfrmMain
+  Left = 327
+  Height = 163
+  Top = 186
+  Width = 522
+  Caption = 'Delphi Modbus master demo'
+  ClientHeight = 163
+  ClientWidth = 522
+  LCLVersion = '0.9.29'
+  object Label1: TLabel
+    Left = 8
+    Height = 14
+    Top = 12
+    Width = 105
+    Caption = 'IP address of the PLC'
+    ParentColor = False
+  end
+  object edtIPAddress: TEdit
+    Left = 120
+    Height = 21
+    Top = 8
+    Width = 136
+    TabOrder = 0
+    Text = '127.0.0.1'
+  end
+  object GroupBox1: TGroupBox
+    Left = 7
+    Height = 113
+    Top = 40
+    Width = 249
+    Caption = ' Read test '
+    ClientHeight = 95
+    ClientWidth = 245
+    TabOrder = 1
+    object Label2: TLabel
+      Left = 11
+      Height = 14
+      Top = 8
+      Width = 76
+      Caption = 'PLC register nr.'
+      ParentColor = False
+    end
+    object edtReadReg: TEdit
+      Left = 102
+      Height = 21
+      Top = 8
+      Width = 137
+      TabOrder = 0
+      Text = '1'
+    end
+    object Label3: TLabel
+      Left = 11
+      Height = 14
+      Top = 35
+      Width = 58
+      Caption = 'Block length'
+      ParentColor = False
+    end
+    object edtReadAmount: TEdit
+      Left = 102
+      Height = 21
+      Top = 35
+      Width = 65
+      TabOrder = 1
+      Text = '1'
+    end
+    object btnRead: TButton
+      Left = 7
+      Height = 25
+      Top = 64
+      Width = 232
+      Caption = '&Read register'
+      OnClick = btnReadClick
+      TabOrder = 2
+    end
+  end
+  object GroupBox2: TGroupBox
+    Left = 264
+    Height = 113
+    Top = 40
+    Width = 249
+    Caption = ' Write test '
+    ClientHeight = 95
+    ClientWidth = 245
+    TabOrder = 2
+    object Label4: TLabel
+      Left = 11
+      Height = 14
+      Top = 8
+      Width = 76
+      Caption = 'PLC register nr.'
+      ParentColor = False
+    end
+    object edtWriteReg: TEdit
+      Left = 102
+      Height = 21
+      Top = 8
+      Width = 137
+      TabOrder = 0
+      Text = '1'
+    end
+    object Label5: TLabel
+      Left = 11
+      Height = 14
+      Top = 35
+      Width = 51
+      Caption = 'New Value'
+      ParentColor = False
+    end
+    object edtValue: TEdit
+      Left = 102
+      Height = 21
+      Top = 35
+      Width = 137
+      TabOrder = 1
+      Text = '1'
+    end
+    object btnWrite: TButton
+      Left = 7
+      Height = 25
+      Top = 64
+      Width = 232
+      Caption = '&Write register'
+      OnClick = btnWriteClick
+      TabOrder = 2
+    end
+  end
+  object mctPLC: TIdModBusClient
+    ConnectTimeout = 0
+    IPVersion = Id_IPv4
+    left = 408
+    top = 8
+  end
+end

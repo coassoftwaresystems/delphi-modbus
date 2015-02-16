@@ -1,0 +1,134 @@
+object frmMain: TfrmMain
+  Left = 0
+  Top = 0
+  BiDiMode = bdLeftToRight
+  Caption = 'Delphi modbus master demo'
+  BorderStyle = bsSingle
+  BorderIcons = [biSystemMenu]
+  ClientHeight = 175
+  ClientWidth = 520
+  Position = poScreenCenter
+  Transparency = False
+  Visible = False
+  StyleLookup = 'backgroundstyle'
+  object Label1: TLabel
+    Position.Point = '(8,12)'
+    Width = 120.000000000000000000
+    Height = 15.000000000000000000
+    TabOrder = 0
+    Text = 'IP address of the PLC'
+  end
+  object edtIPAddress: TEdit
+    Position.Point = '(128,8)'
+    Width = 193.000000000000000000
+    Height = 22.000000000000000000
+    TabOrder = 1
+    ReadOnly = False
+    Password = False
+    Text = '127.0.0.1'
+  end
+  object GroupBox1: TGroupBox
+    Position.Point = '(8,40)'
+    Width = 249.000000000000000000
+    Height = 129.000000000000000000
+    TabOrder = 2
+    Text = 'Read test'
+    object Label2: TLabel
+      Position.Point = '(16,28)'
+      Width = 89.000000000000000000
+      Height = 15.000000000000000000
+      TabOrder = 0
+      Text = 'PLC register nr.'
+    end
+    object Label3: TLabel
+      Position.Point = '(16,60)'
+      Width = 89.000000000000000000
+      Height = 15.000000000000000000
+      TabOrder = 1
+      Text = 'Block length'
+    end
+    object edtReadReg: TEdit
+      Position.Point = '(120,24)'
+      Width = 121.000000000000000000
+      Height = 22.000000000000000000
+      TabOrder = 2
+      ReadOnly = False
+      Password = False
+      Text = '1'
+    end
+    object edtReadAmount: TEdit
+      Position.Point = '(120,56)'
+      Width = 65.000000000000000000
+      Height = 22.000000000000000000
+      TabOrder = 3
+      ReadOnly = False
+      Password = False
+      Text = '1'
+    end
+    object btnRead: TButton
+      Position.Point = '(24,96)'
+      Width = 217.000000000000000000
+      Height = 22.000000000000000000
+      OnClick = btnReadClick
+      TabOrder = 4
+      StaysPressed = False
+      IsPressed = False
+      Text = 'Read Register'
+    end
+  end
+  object GroupBox2: TGroupBox
+    Position.Point = '(264,40)'
+    Width = 249.000000000000000000
+    Height = 129.000000000000000000
+    TabOrder = 3
+    Text = 'Write test'
+    object Label4: TLabel
+      Position.Point = '(16,28)'
+      Width = 89.000000000000000000
+      Height = 15.000000000000000000
+      TabOrder = 0
+      Text = 'PLC register nr.'
+    end
+    object Label5: TLabel
+      Position.Point = '(16,60)'
+      Width = 65.000000000000000000
+      Height = 15.000000000000000000
+      TabOrder = 1
+      Text = 'New value'
+    end
+    object edtWriteReg: TEdit
+      Position.Point = '(104,24)'
+      Width = 137.000000000000000000
+      Height = 22.000000000000000000
+      TabOrder = 2
+      ReadOnly = False
+      Password = False
+      Text = '1'
+    end
+    object edtValue: TEdit
+      Position.Point = '(104,56)'
+      Width = 137.000000000000000000
+      Height = 22.000000000000000000
+      TabOrder = 3
+      ReadOnly = False
+      Password = False
+      Text = '0'
+    end
+    object btnWrite: TButton
+      Position.Point = '(16,96)'
+      Width = 225.000000000000000000
+      Height = 22.000000000000000000
+      OnClick = btnWriteClick
+      TabOrder = 4
+      StaysPressed = False
+      IsPressed = False
+      Text = 'Write Register'
+    end
+  end
+  object mctPLC: TIdModBusClient
+    ConnectTimeout = 0
+    IPVersion = Id_IPv4
+    Left = 464
+    Top = 8
+  end
+end

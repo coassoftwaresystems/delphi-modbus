@@ -1,0 +1,104 @@
+object frmMain: TfrmMain
+  BiDiMode = bdLeftToRight
+  Caption = 'Modbus/TCP Slave Demo (Port 502)'
+  ClientHeight = 450
+  ClientWidth = 546
+  Left = 0
+  Top = 0
+  Transparency = False
+  Visible = False
+  OnCreate = FormCreate
+  OnClose = FormClose
+  StyleLookup = 'backgroundstyle'
+  object btnStart: TButton
+    Position.Point = '(432,8)'
+    Width = 104.000000000000000000
+    Height = 22.000000000000000000
+    OnClick = btnStartClick
+    TabOrder = 0
+    StaysPressed = False
+    IsPressed = False
+    Text = 'Start'
+  end
+  object edtFirstReg: TEdit
+    Position.Point = '(432,72)'
+    Width = 100.000000000000000000
+    Height = 22.000000000000000000
+    TabOrder = 1
+    TextAlign = taTrailing
+    ReadOnly = False
+    Password = False
+    Text = '1'
+  end
+  object edtLastReg: TEdit
+    Position.Point = '(432,120)'
+    Width = 100.000000000000000000
+    Height = 22.000000000000000000
+    TabOrder = 2
+    TextAlign = taTrailing
+    ReadOnly = False
+    Password = False
+    Text = '200'
+  end
+  object Label1: TLabel
+    Position.Point = '(432,56)'
+    Width = 80.000000000000000000
+    Height = 15.000000000000000000
+    TabOrder = 3
+    Text = 'First register'
+  end
+  object Label2: TLabel
+    Position.Point = '(432,104)'
+    Width = 80.000000000000000000
+    Height = 15.000000000000000000
+    TabOrder = 4
+    Text = 'Last register'
+  end
+  object sgdRegisters: TStringGrid
+    Position.Point = '(8,8)'
+    Width = 417.000000000000000000
+    Height = 433.000000000000000000
+    StyleLookup = 'gridstyle'
+    TabOrder = 5
+    RowHeight = 21.000000000000000000
+    RowCount = 0
+    object StringColumn1: TStringColumn
+      Width = 64.000000000000000000
+      Height = 410.000000000000000000
+      HitTest = False
+      TabOrder = 0
+      Header = 'RegNo'
+    end
+    object StringColumn2: TStringColumn
+      Position.Point = '(64,0)'
+      Width = 116.000000000000000000
+      Height = 410.000000000000000000
+      HitTest = False
+      TabOrder = 1
+      Header = 'Decimal'
+    end
+    object StringColumn3: TStringColumn
+      Position.Point = '(180,0)'
+      Width = 86.000000000000000000
+      Height = 410.000000000000000000
+      HitTest = False
+      TabOrder = 2
+      Header = 'Hex'
+    end
+    object StringColumn4: TStringColumn
+      Position.Point = '(266,0)'
+      Width = 120.000000000000000000
+      Height = 410.000000000000000000
+      HitTest = False
+      TabOrder = 3
+      Header = 'Binary'
+    end
+  end
+  object msrPLC: TIdModBusServer
+    Bindings = <>
+    OnReadHoldingRegisters = msrPLCReadHoldingRegisters
+    OnWriteRegisters = msrPLCWriteRegisters
+    Left = 456
+    Top = 392
+  end
+end

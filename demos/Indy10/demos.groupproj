@@ -1,0 +1,48 @@
+﻿	<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+		<PropertyGroup>
+			<ProjectGuid>{C9604D1F-587A-4AB1-8AC9-6A8B5ECB2970}</ProjectGuid>
+		</PropertyGroup>
+		<ItemGroup>
+			<Projects Include="Slave\ModbusSlave.dproj">
+				<Dependencies/>
+			</Projects>
+			<Projects Include="Master\ModbusMaster.dproj">
+				<Dependencies/>
+			</Projects>
+		</ItemGroup>
+		<ProjectExtensions>
+			<Borland.Personality>Default.Personality.12</Borland.Personality>
+			<Borland.ProjectType/>
+			<BorlandProject>
+				<Default.Personality/>
+			</BorlandProject>
+		</ProjectExtensions>
+		<Target Name="ModbusSlave">
+			<MSBuild Projects="Slave\ModbusSlave.dproj"/>
+		</Target>
+		<Target Name="ModbusSlave:Clean">
+			<MSBuild Targets="Clean" Projects="Slave\ModbusSlave.dproj"/>
+		</Target>
+		<Target Name="ModbusSlave:Make">
+			<MSBuild Targets="Make" Projects="Slave\ModbusSlave.dproj"/>
+		</Target>
+		<Target Name="ModbusMaster">
+			<MSBuild Projects="Master\ModbusMaster.dproj"/>
+		</Target>
+		<Target Name="ModbusMaster:Clean">
+			<MSBuild Targets="Clean" Projects="Master\ModbusMaster.dproj"/>
+		</Target>
+		<Target Name="ModbusMaster:Make">
+			<MSBuild Targets="Make" Projects="Master\ModbusMaster.dproj"/>
+		</Target>
+		<Target Name="Build">
+			<CallTarget Targets="ModbusSlave;ModbusMaster"/>
+		</Target>
+		<Target Name="Clean">
+			<CallTarget Targets="ModbusSlave:Clean;ModbusMaster:Clean"/>
+		</Target>
+		<Target Name="Make">
+			<CallTarget Targets="ModbusSlave:Make;ModbusMaster:Make"/>
+		</Target>
+		<Import Project="$(BDS)\Bin\CodeGear.Group.Targets" Condition="Exists('$(BDS)\Bin\CodeGear.Group.Targets')"/>
+	</Project>
