@@ -4,13 +4,13 @@ Demos are available based on Indy 9 and Indy 10 implementation
 
 Indy9: Demos created in Delphi 7, and should also work on Delphi 5 and 6.
        (to open under earlier Delphi versions: delete *.dof).
-Indy10: Demos created in Delphi 2010, and should also work on Delphi 2005-2009.
+Indy10: Demos created in Delphi 2010, and should also work on Delphi 2005-XE8.
         (to open under earlier Delphi versions: delete *.dproj).
 
 In addition cross platform demos are available:
 Lazarus: Demos created using FPC / Lazarus.
 FireMonkey: Demos created using FireMonkey on Delphi XE2. Targets Win32, Win64
-            and OSX
+            and OSX.
 
 Available demos:
 
@@ -38,6 +38,3 @@ it might generate. When such message appears, save the modified form.
 
 After taking these steps into account, the demos can be compiled and run from
 the IDE.
-
---------------------------------------------------------------------------------
-$Id: readme.txt,v 1.5 2011/08/25 10:10:14 plpolak Exp $
