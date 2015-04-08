@@ -1,7 +1,8 @@
-Version 1.6.? -
+Version 1.6.4 -
 ===============================
 - Fix: TIdModbusServer did nog allow access to the last register of the
   configured range (MaxRegister property).
+- Added support for Delphi XE8.
 
 Version 1.6.3 - October 7, 2014
 ===============================

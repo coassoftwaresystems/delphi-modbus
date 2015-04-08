@@ -8,9 +8,9 @@ supported.
 Supported Delphi versions
 =========================
 The components can be used in Delphi versions 5, 6, 7, 2005, 2006, 2007, 2009,
-2010, XE, XE2, XE3, XE4, XE5 and XE6. The components are based on the Internet
-Direct (aka 'Indy') components, which ship with Delphi versions 6 and up. Only
-native development is supported (no .NET version is available).
+2010, XE, XE2, XE3, XE4, XE5, XE6, XE7 and XE8. The components are based on the
+Internet Direct (aka 'Indy') components, which ship with Delphi versions 6 and
+up. Only native development is supported (no .NET version is available).
 
 For Delphi 5 and 6, you should download the latest Indy version 9.0 from the
 Indy website at http://www.indyproject.org/. At the moment of this writing,
@@ -28,7 +28,7 @@ old, and DelphiModbus requires them to be replaced by a more recent version
 which is available for download from the Indy project website.
 
 Packages are provided and tested for all mentioned Delphi versions, although
-full testing occurs only on Delphi 7, 2007 and XE4 (which are my main Delphi
+full testing occurs only on Delphi 7, 2007 and XE8 (which are my main Delphi
 versions for production use). I expect that the Delphi 2006 packages will work
 with Turbo Delphi 2006 (Pro) as well, although this has not been tested.
 
@@ -66,7 +66,4 @@ installed first (http://www.pilotlogic.com/).
 Support
 =======
 For support on the Delphi Modbus library, please visit the project's website on
-SourceForge: http://sourceforge.net/projects/delphimodbus/
-
---------------------------------------------------------------------------------
-$Id: readme.txt,v 1.19 2014/04/16 12:18:42 plpolak Exp $
+GitHub: https://github.com/coassoftwaresystems/delphi-modbus
