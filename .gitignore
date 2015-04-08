@@ -9,3 +9,4 @@ lib/
 __history/
 Release/
 Debug/
+*.stat

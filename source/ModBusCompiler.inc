@@ -18,8 +18,6 @@ other provisions required by the GPL. If you do not delete the provisions
 above, a recipient may use your version of this file under either the MPL or
 the GPL.
 
-$Id: ModBusCompiler.inc,v 1.13 2014/10/07 13:34:30 plpolak Exp $
-
 ===============================================================================}
 
 { Logic to detect the used Delphi compiler version: }
@@ -256,6 +254,29 @@ $Id: ModBusCompiler.inc,v 1.13 2014/10/07 13:34:30 plpolak Exp $
   {$DEFINE DMB_DELPHIXE6}
   {$DEFINE DMB_DELPHIXE7}
   {$DEFINE DMB_DELPHIXE7_ONLY}
+{$ENDIF}
+{$IFDEF VER290}
+  {$DEFINE DMB_DELPHI1}
+  {$DEFINE DMB_DELPHI2}
+  {$DEFINE DMB_DELPHI3}
+  {$DEFINE DMB_DELPHI4}
+  {$DEFINE DMB_DELPHI5}
+  {$DEFINE DMB_DELPHI6}
+  {$DEFINE DMB_DELPHI7}
+  {$DEFINE DMB_DELPHI2005}
+  {$DEFINE DMB_DELPHI2006}
+  {$DEFINE DMB_DELPHI2007}
+  {$DEFINE DMB_DELPHI2009}
+  {$DEFINE DMB_DELPHI2010}
+  {$DEFINE DMB_DELPHIXE}
+  {$DEFINE DMB_DELPHIXE2}
+  {$DEFINE DMB_DELPHIXE3}
+  {$DEFINE DMB_DELPHIXE4}
+  {$DEFINE DMB_DELPHIXE5}
+  {$DEFINE DMB_DELPHIXE6}
+  {$DEFINE DMB_DELPHIXE7}
+  {$DEFINE DMB_DELPHIXE8}
+  {$DEFINE DMB_DELPHIXE8_ONLY}
 {$ENDIF}
 
 
