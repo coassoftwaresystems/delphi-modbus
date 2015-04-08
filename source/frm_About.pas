@@ -18,8 +18,6 @@ other provisions required by the GPL. If you do not delete the provisions
 above, a recipient may use your version of this file under either the MPL or
 the GPL.
 
-$Id: frm_About.pas,v 1.7 2010/02/05 12:25:30 plpolak Exp $
-
 ===============================================================================}
 
 {$I ModBusCompiler.inc}

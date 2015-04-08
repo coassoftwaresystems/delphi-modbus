@@ -18,8 +18,6 @@ other provisions required by the GPL. If you do not delete the provisions
 above, a recipient may use your version of this file under either the MPL or
 the GPL.
 
-$Id: AboutComponentEditor.pas,v 1.5 2013/04/23 08:59:11 plpolak Exp $
-
 ===============================================================================}
 
 {$I ModBusCompiler.inc}

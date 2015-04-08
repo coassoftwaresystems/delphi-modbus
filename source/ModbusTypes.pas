@@ -18,8 +18,6 @@ other provisions required by the GPL. If you do not delete the provisions
 above, a recipient may use your version of this file under either the MPL or
 the GPL.
 
-$Id: ModbusTypes.pas,v 1.3 2010/02/05 08:45:57 plpolak Exp $
-
 ===============================================================================}
 
 {$I ModBusCompiler.inc}
