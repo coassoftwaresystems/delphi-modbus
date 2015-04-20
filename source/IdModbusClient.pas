@@ -289,8 +289,8 @@ begin
       begin
         BlockLength := ABlockLength;
       { Don't exceed max length }
-        if (BlockLength > 250) then
-          BlockLength := 250;
+        if (BlockLength > 125) then
+          BlockLength := 125;
       { Initialise the data part }
         SendBuffer.FunctionCode := Byte(AModBusFunction); { Write appropriate function code }
         SendBuffer.Header.UnitID := FUnitID;
