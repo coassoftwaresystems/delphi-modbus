@@ -1,3 +1,7 @@
+Version
+==============================
+- Added support for Delphi 10 Seattle.
+
 Version 1.6.4 - June 17 - 2015
 ==============================
 - Fix: TIdModbusServer did not allow access to the last register of the
