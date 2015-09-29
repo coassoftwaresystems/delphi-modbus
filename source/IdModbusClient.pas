@@ -53,6 +53,9 @@ type
   {$IFDEF DMB_DELPHIXE4}
                                pidiOSDevice or pidiOSSimulator or
   {$ENDIF}
+  {$IFDEF DMB_DELPHIXE8}
+                               pidiOSDevice64 or
+  {$ENDIF}
                                pidOSX32)]
 {$ENDIF}
   TIdModBusClient = class(TIdTCPClient)

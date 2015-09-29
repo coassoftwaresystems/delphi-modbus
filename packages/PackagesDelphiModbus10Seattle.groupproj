@@ -1,0 +1,48 @@
+﻿<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+    <PropertyGroup>
+        <ProjectGuid>{3E47166A-9AD3-453E-821A-94DE9D7B0E11}</ProjectGuid>
+    </PropertyGroup>
+    <ItemGroup>
+        <Projects Include="dclDelphiModbus10Seattle.dproj">
+            <Dependencies/>
+        </Projects>
+        <Projects Include="DelphiModbus10Seattle.dproj">
+            <Dependencies/>
+        </Projects>
+    </ItemGroup>
+    <ProjectExtensions>
+        <Borland.Personality>Default.Personality.12</Borland.Personality>
+        <Borland.ProjectType/>
+        <BorlandProject>
+            <Default.Personality/>
+        </BorlandProject>
+    </ProjectExtensions>
+    <Target Name="dclDelphiModbus10Seattle">
+        <MSBuild Projects="dclDelphiModbus10Seattle.dproj"/>
+    </Target>
+    <Target Name="dclDelphiModbus10Seattle:Clean">
+        <MSBuild Projects="dclDelphiModbus10Seattle.dproj" Targets="Clean"/>
+    </Target>
+    <Target Name="dclDelphiModbus10Seattle:Make">
+        <MSBuild Projects="dclDelphiModbus10Seattle.dproj" Targets="Make"/>
+    </Target>
+    <Target Name="DelphiModbus10Seattle">
+        <MSBuild Projects="DelphiModbus10Seattle.dproj"/>
+    </Target>
+    <Target Name="DelphiModbus10Seattle:Clean">
+        <MSBuild Projects="DelphiModbus10Seattle.dproj" Targets="Clean"/>
+    </Target>
+    <Target Name="DelphiModbus10Seattle:Make">
+        <MSBuild Projects="DelphiModbus10Seattle.dproj" Targets="Make"/>
+    </Target>
+    <Target Name="Build">
+        <CallTarget Targets="dclDelphiModbus10Seattle;DelphiModbus10Seattle"/>
+    </Target>
+    <Target Name="Clean">
+        <CallTarget Targets="dclDelphiModbus10Seattle:Clean;DelphiModbus10Seattle:Clean"/>
+    </Target>
+    <Target Name="Make">
+        <CallTarget Targets="dclDelphiModbus10Seattle:Make;DelphiModbus10Seattle:Make"/>
+    </Target>
+    <Import Project="$(BDS)\Bin\CodeGear.Group.Targets" Condition="Exists('$(BDS)\Bin\CodeGear.Group.Targets')"/>
+</Project>
