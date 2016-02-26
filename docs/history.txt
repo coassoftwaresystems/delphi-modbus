@@ -1,3 +1,7 @@
+
+==================================
+- Fix: IdModBusServer WriteOneCoil command don't raise onWriteCoilsEvent (#4)
+
 Version 1.6.5 - September 29, 2015
 ==================================
 - Added support for Delphi 10 Seattle.
