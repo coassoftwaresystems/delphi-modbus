@@ -605,7 +605,36 @@ begin
           {$ENDIF}
           end;
         end;
-      mbfWriteOneCoil,
+      mbfWriteOneCoil:
+        begin
+          iRegNr := GetRegNr(Swap16(Word((@ReceiveBuffer.MBPData[0])^)));
+          iCount := 1;
+          if ((iRegNr < FMinRegister) or ((iRegNr + iCount - 1) > FMaxRegister)) then
+          {$IFDEF DMB_INDY10}
+            SendError(AContext, mbeIllegalRegister, ReceiveBuffer)
+          {$ELSE}
+            SendError(AThread, mbeIllegalRegister, ReceiveBuffer)
+          {$ENDIF}
+          else
+          begin
+          { Decode the contents of the Registers }
+            GetCoilsFromBuffer(@ReceiveBuffer.MBPData[2], iCount, Data);
+          { Send back the response to the master }
+          {$IFDEF DMB_INDY10}
+            InternalWriteCoils(AContext, iRegNr, iCount, Data, ReceiveBuffer, ErrorCode);
+            if (ErrorCode = mbeOk) then
+              SendResponse(AContext, ReceiveBuffer, Data)
+            else
+              SendError(AContext, ErrorCode, ReceiveBuffer);
+          {$ELSE}
+            InternalWriteCoils(AThread, iRegNr, iCount, Data, ReceiveBuffer, ErrorCode);
+            if (ErrorCode = mbeOk) then
+              SendResponse(AThread, ReceiveBuffer, Data)
+            else
+              SendError(AThread, ErrorCode, ReceiveBuffer);
+          {$ENDIF}
+          end;
+        end;
       mbfWriteOneReg:
         begin
         { Get the register number }
