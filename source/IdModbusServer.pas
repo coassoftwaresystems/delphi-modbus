@@ -982,9 +982,9 @@ begin
       mbfReadInputBits:
         begin
           L := Swap16(Word((@ReceiveBuffer.MBPData[2])^));
-          if (L <= MaxBlockLength) then
+          if (L <= MaxCoils) then
           begin
-            SendBuffer.MBPData[0] := Byte(L shl 1);
+            SendBuffer.MBPData[0] := Byte((L + 7) div 8);
             PutCoilsIntoBuffer(@SendBuffer.MBPData[1], L, Data);
             SendBuffer.Header.RecLength := Swap16(3 + SendBuffer.MBPData[0]);
           end;
