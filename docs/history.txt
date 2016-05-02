@@ -1,6 +1,10 @@
 
 ==================================
-- Fix: IdModBusServer WriteOneCoil command don't raise onWriteCoilsEvent (#4)
+- Added support for Delphi 10.1 Berlin.
+- Fix: IdModBusServer: WriteOneCoil command don't raise onWriteCoilsEvent (#4)
+- Fix: IdModBusClient: various limits are too short (#5)
+- Fix: IdModBusServer: The Server returns the wrong length in the answer, so the
+  client detects length inconsistency between request and response (#5)
 
 Version 1.6.5 - September 29, 2015
 ==================================
