@@ -1,0 +1,48 @@
+﻿<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+    <PropertyGroup>
+        <ProjectGuid>{A8A21CA0-9664-4FFB-9157-DA0DCCD32446}</ProjectGuid>
+    </PropertyGroup>
+    <ItemGroup>
+        <Projects Include="dclDelphiModbus101Berlin.dproj">
+            <Dependencies/>
+        </Projects>
+        <Projects Include="DelphiModbus101Berlin.dproj">
+            <Dependencies/>
+        </Projects>
+    </ItemGroup>
+    <ProjectExtensions>
+        <Borland.Personality>Default.Personality.12</Borland.Personality>
+        <Borland.ProjectType/>
+        <BorlandProject>
+            <Default.Personality/>
+        </BorlandProject>
+    </ProjectExtensions>
+    <Target Name="dclDelphiModbus101Berlin">
+        <MSBuild Projects="dclDelphiModbus101Berlin.dproj"/>
+    </Target>
+    <Target Name="dclDelphiModbus101Berlin:Clean">
+        <MSBuild Projects="dclDelphiModbus101Berlin.dproj" Targets="Clean"/>
+    </Target>
+    <Target Name="dclDelphiModbus101Berlin:Make">
+        <MSBuild Projects="dclDelphiModbus101Berlin.dproj" Targets="Make"/>
+    </Target>
+    <Target Name="DelphiModbus101Berlin">
+        <MSBuild Projects="DelphiModbus101Berlin.dproj"/>
+    </Target>
+    <Target Name="DelphiModbus101Berlin:Clean">
+        <MSBuild Projects="DelphiModbus101Berlin.dproj" Targets="Clean"/>
+    </Target>
+    <Target Name="DelphiModbus101Berlin:Make">
+        <MSBuild Projects="DelphiModbus101Berlin.dproj" Targets="Make"/>
+    </Target>
+    <Target Name="Build">
+        <CallTarget Targets="dclDelphiModbus101Berlin;DelphiModbus101Berlin"/>
+    </Target>
+    <Target Name="Clean">
+        <CallTarget Targets="dclDelphiModbus101Berlin:Clean;DelphiModbus101Berlin:Clean"/>
+    </Target>
+    <Target Name="Make">
+        <CallTarget Targets="dclDelphiModbus101Berlin:Make;DelphiModbus101Berlin:Make"/>
+    </Target>
+    <Import Project="$(BDS)\Bin\CodeGear.Group.Targets" Condition="Exists('$(BDS)\Bin\CodeGear.Group.Targets')"/>
+</Project>
