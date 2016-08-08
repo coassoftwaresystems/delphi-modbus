@@ -1,5 +1,5 @@
-
-==================================
+Version 1.6.6 - August 8, 2015
+==============================
 - Added support for Delphi 10.1 Berlin.
 - Fix: IdModBusServer: WriteOneCoil command don't raise onWriteCoilsEvent (#4)
 - Fix: IdModBusClient: various limits are too short (#5)
