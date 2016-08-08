@@ -220,8 +220,8 @@ begin
       begin
         BlockLength := ABlockLength;
       { Don't exceed max length }
-        if (BlockLength > 250) then
-          BlockLength := 250;
+        if (BlockLength > 2000) then
+          BlockLength := 2000;
       { Initialise the data part }
         SendBuffer.FunctionCode := Byte(AModBusFunction); { Write appropriate function code }
         SendBuffer.Header.UnitID := FUnitID;
@@ -275,8 +275,8 @@ begin
       begin
         BlockLength := ABlockLength;
       { Don't exceed max length }
-        if (BlockLength > 250) then
-          BlockLength := 250;
+        if (BlockLength > 1968) then
+          BlockLength := 1968;
       { Initialise the data part }
         SendBuffer.FunctionCode := Byte(AModBusFunction); { Write appropriate function code }
         SendBuffer.Header.UnitID := FUnitID;
@@ -292,8 +292,8 @@ begin
       begin
         BlockLength := ABlockLength;
       { Don't exceed max length }
-        if (BlockLength > 125) then
-          BlockLength := 125;
+        if (BlockLength > 120) then
+          BlockLength := 120;
       { Initialise the data part }
         SendBuffer.FunctionCode := Byte(AModBusFunction); { Write appropriate function code }
         SendBuffer.Header.UnitID := FUnitID;
@@ -354,8 +354,8 @@ begin
       mbfReadInputBits:
         begin
           BlockLength := ReceiveBuffer.MBPData[0] * 8;
-          if (BlockLength > 250) then
-            BlockLength := 250;
+          if (BlockLength > 2000) then
+            BlockLength := 2000;
           GetCoilsFromBuffer(@ReceiveBuffer.MBPData[1], BlockLength, Data);
         end;
       mbfReadHoldingRegs,
