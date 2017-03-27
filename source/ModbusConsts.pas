@@ -67,7 +67,7 @@ const
   MaxCoils = 2000;
 
 const
-  DMB_VERSION = '1.6.6'; {Do not Localize}
+  DMB_VERSION = '1.6.7'; {Do not Localize}
   
 const
   DefaultLogTimeFormat = 'yyyy-mm-dd hh:nn:ss.zzz';  {Do not Localize}
