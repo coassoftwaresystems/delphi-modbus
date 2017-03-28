@@ -3,10 +3,10 @@
         <ProjectGuid>{A8A21CA0-9664-4FFB-9157-DA0DCCD32446}</ProjectGuid>
     </PropertyGroup>
     <ItemGroup>
-        <Projects Include="dclDelphiModbus102Tokyo.dproj">
+        <Projects Include="DelphiModbus102Tokyo.dproj">
             <Dependencies/>
         </Projects>
-        <Projects Include="DelphiModbus102Tokyo.dproj">
+        <Projects Include="dclDelphiModbus102Tokyo.dproj">
             <Dependencies/>
         </Projects>
     </ItemGroup>
@@ -17,15 +17,6 @@
             <Default.Personality/>
         </BorlandProject>
     </ProjectExtensions>
-    <Target Name="dclDelphiModbus102Tokyo">
-        <MSBuild Projects="dclDelphiModbus102Tokyo.dproj"/>
-    </Target>
-    <Target Name="dclDelphiModbus102Tokyo:Clean">
-        <MSBuild Projects="dclDelphiModbus102Tokyo.dproj" Targets="Clean"/>
-    </Target>
-    <Target Name="dclDelphiModbus102Tokyo:Make">
-        <MSBuild Projects="dclDelphiModbus102Tokyo.dproj" Targets="Make"/>
-    </Target>
     <Target Name="DelphiModbus102Tokyo">
         <MSBuild Projects="DelphiModbus102Tokyo.dproj"/>
     </Target>
@@ -35,14 +26,23 @@
     <Target Name="DelphiModbus102Tokyo:Make">
         <MSBuild Projects="DelphiModbus102Tokyo.dproj" Targets="Make"/>
     </Target>
+    <Target Name="dclDelphiModbus102Tokyo">
+        <MSBuild Projects="dclDelphiModbus102Tokyo.dproj"/>
+    </Target>
+    <Target Name="dclDelphiModbus102Tokyo:Clean">
+        <MSBuild Projects="dclDelphiModbus102Tokyo.dproj" Targets="Clean"/>
+    </Target>
+    <Target Name="dclDelphiModbus102Tokyo:Make">
+        <MSBuild Projects="dclDelphiModbus102Tokyo.dproj" Targets="Make"/>
+    </Target>
     <Target Name="Build">
-        <CallTarget Targets="dclDelphiModbus102Tokyo;DelphiModbus102Tokyo"/>
+        <CallTarget Targets="DelphiModbus102Tokyo;dclDelphiModbus102Tokyo"/>
     </Target>
     <Target Name="Clean">
-        <CallTarget Targets="dclDelphiModbus102Tokyo:Clean;DelphiModbus102Tokyo:Clean"/>
+        <CallTarget Targets="DelphiModbus102Tokyo:Clean;dclDelphiModbus102Tokyo:Clean"/>
     </Target>
     <Target Name="Make">
-        <CallTarget Targets="dclDelphiModbus102Tokyo:Make;DelphiModbus102Tokyo:Make"/>
+        <CallTarget Targets="DelphiModbus102Tokyo:Make;dclDelphiModbus102Tokyo:Make"/>
     </Target>
     <Import Project="$(BDS)\Bin\CodeGear.Group.Targets" Condition="Exists('$(BDS)\Bin\CodeGear.Group.Targets')"/>
 </Project>

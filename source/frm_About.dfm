@@ -50,12 +50,12 @@ object frmAbout: TfrmAbout
       Caption = 'P.L. Polak'
     end
     object lblWebsite: TLabel
-      Left = 104
+      Left = 22
       Top = 224
-      Width = 217
+      Width = 266
       Height = 13
       Cursor = crHandPoint
-      Caption = 'http://sourceforge.net/projects/delphimodbus'
+      Caption = 'https://github.com/coassoftwaresystems/delphi-modbus'
       Font.Charset = DEFAULT_CHARSET
       Font.Color = clBlue
       Font.Height = -11
