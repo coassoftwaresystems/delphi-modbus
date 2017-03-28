@@ -29,7 +29,7 @@ old, and DelphiModbus requires them to be replaced by a more recent version
 which is available for download from the Indy project website.
 
 Packages are provided and tested for all mentioned Delphi versions, although
-full testing occurs only on Delphi 7, 2007 and 10 Seattle (which are my main
+full testing occurs only on Delphi 7, 2007 and 10.2 Tokyo (which are my main
 Delphi versions for production use). I expect that the Delphi 2006 packages will
 work with Turbo Delphi 2006 (Pro) as well, although this has not been tested.
 
@@ -50,10 +50,6 @@ To install open the runtime package and the designtime package in the IDE:
  - dclDelphiModbus<version>.dpk : The designtime package source
 Choose 'Compile' for the runtime package, and select 'Install' for the design
 time package. Delphi will now report that the components have been installed.
-
-Alternative for this procedure you can also use the Delphi package installer
-utility (http://code.google.com/p/delphipi/), which automates this process for
-you.
 
 
 Support for Free Pascal / Lazarus
