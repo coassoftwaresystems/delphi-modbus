@@ -1,22 +1,25 @@
 {===============================================================================
 
-The contents of this file are subject to the Mozilla Public License Version 1.1
-(the "License"); you may not use this file except in compliance with the
-License. You may obtain a copy of the License at http://www.mozilla.org/MPL/
+Copyright (c) 2010 P.L. Polak
 
-Software distributed under the License is distributed on an "AS IS" basis,
-WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License for
-the specific language governing rights and limitations under the License.
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
 
-Alternatively, the contents of this file may be used under the terms of the
-GNU General Public License Version 2 or later (the "GPL"), in which case
-the provisions of the GPL are applicable instead of those above. If you wish to
-allow use of your version of this file only under the terms of the GPL and not
-to allow others to use your version of this file under the MPL, indicate your
-decision by deleting the provisions above and replace them with the notice and
-other provisions required by the GPL. If you do not delete the provisions
-above, a recipient may use your version of this file under either the MPL or
-the GPL.
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
 
 ===============================================================================}
 
@@ -326,6 +329,33 @@ the GPL.
   {$DEFINE DMB_DELPHI10_SEATTLE}
   {$DEFINE DMB_DELPHI10_1_BERLIN}
   {$DEFINE DMB_DELPHI10_1_BERLIN_ONLY}
+{$ENDIF}
+
+{$IFDEF VER320}
+  {$DEFINE DMB_DELPHI1}
+  {$DEFINE DMB_DELPHI2}
+  {$DEFINE DMB_DELPHI3}
+  {$DEFINE DMB_DELPHI4}
+  {$DEFINE DMB_DELPHI5}
+  {$DEFINE DMB_DELPHI6}
+  {$DEFINE DMB_DELPHI7}
+  {$DEFINE DMB_DELPHI2005}
+  {$DEFINE DMB_DELPHI2006}
+  {$DEFINE DMB_DELPHI2007}
+  {$DEFINE DMB_DELPHI2009}
+  {$DEFINE DMB_DELPHI2010}
+  {$DEFINE DMB_DELPHIXE}
+  {$DEFINE DMB_DELPHIXE2}
+  {$DEFINE DMB_DELPHIXE3}
+  {$DEFINE DMB_DELPHIXE4}
+  {$DEFINE DMB_DELPHIXE5}
+  {$DEFINE DMB_DELPHIXE6}
+  {$DEFINE DMB_DELPHIXE7}
+  {$DEFINE DMB_DELPHIXE8}
+  {$DEFINE DMB_DELPHI10_SEATTLE}
+  {$DEFINE DMB_DELPHI10_1_BERLIN}
+  {$DEFINE DMB_DELPHI10_2_TOKYO}
+  {$DEFINE DMB_DELPHI10_1_TOKYO_ONLY}
 {$ENDIF}
 
 {$IFDEF DMB_DELPHI2005}
