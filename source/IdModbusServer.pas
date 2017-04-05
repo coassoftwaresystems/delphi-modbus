@@ -967,12 +967,16 @@ procedure TIdModBusServer.SendResponse(const AThread: TIdPeerThread;
 var
   SendBuffer: TModBusResponseBuffer;
   L: Integer;
+  ValidRequest : Boolean;
 {$IFDEF DMB_INDY10}
   Buffer: TIdBytes;
 {$ENDIF}
 begin
   if Active then
   begin
+
+    {Check Valid }
+    ValidRequest  := false;
     FillChar(SendBuffer, SizeOf(SendBuffer), 0);
     SendBuffer.Header.TransactionID := ReceiveBuffer.Header.TransactionID;
     SendBuffer.Header.ProtocolID := ReceiveBuffer.Header.ProtocolID;
@@ -985,22 +989,24 @@ begin
       mbfReadInputBits:
         begin
           L := Swap16(Word((@ReceiveBuffer.MBPData[2])^));
-          if (L <= MaxCoils) then
+          if (L > 0) and (L <= MaxCoils) then
           begin
             SendBuffer.MBPData[0] := Byte((L + 7) div 8);
             PutCoilsIntoBuffer(@SendBuffer.MBPData[1], L, Data);
             SendBuffer.Header.RecLength := Swap16(3 + SendBuffer.MBPData[0]);
+            ValidRequest  := true;
           end;
         end;
       mbfReadInputRegs,
       mbfReadHoldingRegs:
         begin
           L := Swap16(Word((@ReceiveBuffer.MBPData[2])^));
-          if (L <= MaxBlockLength) then
+          if (L > 0) and (L <= MaxBlockLength) then
           begin
             SendBuffer.MBPData[0] := Byte(L shl 1);
             PutRegistersIntoBuffer(@SendBuffer.MBPData[1], L, Data);
             SendBuffer.Header.RecLength := Swap16(3 + SendBuffer.MBPData[0]);
+            ValidRequest  := true;
           end;
         end;
     else
@@ -1010,18 +1016,33 @@ begin
         SendBuffer.MBPData[2] := ReceiveBuffer.MBPData[2];
         SendBuffer.MBPData[3] := ReceiveBuffer.MBPData[3];
         SendBuffer.Header.RecLength := Swap16(6);
+        ValidRequest  := true;
       end;
     end;
-  {$IFDEF DMB_INDY10}
-    Buffer := RawToBytes(SendBuffer, Swap16(SendBuffer.Header.RecLength) + 6);
-    AContext.Connection.Socket.WriteDirect(Buffer);
-    if FLogEnabled then
-      LogResponseBuffer(AContext, SendBuffer, Swap16(SendBuffer.Header.RecLength) + 6);
-  {$ELSE}
-    AThread.Connection.Socket.Send(SendBuffer, Swap16(SendBuffer.Header.RecLength) + 6);
-    if FLogEnabled then
-      LogResponseBuffer(AThread, SendBuffer, Swap16(SendBuffer.Header.RecLength) + 6);
-  {$ENDIF}
+    {Send buffer if Request is Valid}
+    if ValidRequest then
+    begin
+    {$IFDEF DMB_INDY10}
+      Buffer := RawToBytes(SendBuffer, Swap16(SendBuffer.Header.RecLength) + 6);
+      AContext.Connection.Socket.WriteDirect(Buffer);
+      if FLogEnabled then
+        LogResponseBuffer(AContext, SendBuffer, Swap16(SendBuffer.Header.RecLength) + 6);
+    {$ELSE}
+      AThread.Connection.Socket.Send(SendBuffer, Swap16(SendBuffer.Header.RecLength) + 6);
+      if FLogEnabled then
+        LogResponseBuffer(AThread, SendBuffer, Swap16(SendBuffer.Header.RecLength) + 6);
+    {$ENDIF}
+    end
+    else
+    begin
+      {Send error for invalid request}
+    {$IFDEF DMB_INDY10}
+      SendError(AContext, mbeServerFailure, ReceiveBuffer);
+    {$ELSE}
+      SendError(AThread, mbeServerFailure, ReceiveBuffer);
+    {$ENDIF}
+       exit;
+    end;
   end;
 end;
 
