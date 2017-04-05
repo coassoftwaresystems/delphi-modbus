@@ -122,7 +122,7 @@ end;
 
 function Swap16(const DataToSwap: Word): Word;
 begin
-  Result := (DataToSwap div 256) + ((DataToSwap mod 256)*256);
+  Result := (DataToSwap div 256) + ((DataToSwap mod 256) * 256);
 end;
 
 
@@ -132,6 +132,9 @@ var
   BitMask: Byte;
   i: Integer;
 begin
+  if (Length(Data) < (Count - 1)) or (Length(Data) = 0) or (Count = 0) then
+    raise Exception.Create('GetCoilsFromBuffer: Data array length cannot be less then Count');
+
   BytePtr := Buffer;
   BitMask := 1;
 
@@ -161,6 +164,9 @@ var
   BitMask: Byte;
   i: Word;
 begin
+  if (Length(Data) < (Count - 1)) or (Length(Data) = 0) or (Count = 0) then
+    raise Exception.Create('PutCoilsIntoBuffer: Data array length cannot be less then Count');
+
   BytePtr := Buffer;
   BitMask := 1;
   for i := 0 to (Count - 1) do
@@ -185,17 +191,19 @@ end;
 
 procedure GetRegistersFromBuffer(const Buffer: PWord; const Count: Word; var Data: array of Word);
 var
-  WPtr: PWord;
+  WordPtr: PWord;
   i: Word;
 begin
-  WPtr := Buffer;
+  if (Length(Data) < (Count - 1)) or (Length(Data) = 0) or (Count = 0) then
+    raise Exception.Create('GetRegistersFromBuffer: Data array length cannot be less then Count');
 
+  WordPtr := Buffer;
   for i := 0 to (Count - 1) do
   begin
-    Data[i] := Swap16(WPtr^);
-    Inc(WPtr);
+    Data[i] := Swap16(WordPtr^);
+    Inc(WordPtr);
   end;
-end;
+end
 
 
 procedure PutRegistersIntoBuffer(const Buffer: PWord; const Count: Word; const Data: array of Word);
@@ -203,6 +211,9 @@ var
   WordPtr: PWord;
   i: Word;
 begin
+  if (Length(Data) < (Count - 1)) or (Length(Data) = 0) or (Count = 0) then
+    raise Exception.Create('PutRegistersIntoBuffer: Data array length cannot be less then Count');
+
   WordPtr := Buffer;
   for i := 0 to (Count - 1) do
   begin
