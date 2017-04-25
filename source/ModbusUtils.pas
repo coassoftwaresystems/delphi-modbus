@@ -203,7 +203,7 @@ begin
     Data[i] := Swap16(WordPtr^);
     Inc(WordPtr);
   end;
-end
+end;
 
 
 procedure PutRegistersIntoBuffer(const Buffer: PWord; const Count: Word; const Data: array of Word);
