@@ -132,7 +132,7 @@ var
   BitMask: Byte;
   i: Integer;
 begin
-  if (Length(Data) < (Count - 1)) or (Length(Data) = 0) or (Count = 0) then
+  if (Length(Data) < ((Count div 16) - 1)) or (Length(Data) = 0) or (Count = 0) then
     raise Exception.Create('GetCoilsFromBuffer: Data array length cannot be less then Count');
 
   BytePtr := Buffer;
@@ -164,7 +164,7 @@ var
   BitMask: Byte;
   i: Word;
 begin
-  if (Length(Data) < (Count - 1)) or (Length(Data) = 0) or (Count = 0) then
+  if (Length(Data) < ((Count div 16) - 1)) or (Length(Data) = 0) or (Count = 0) then
     raise Exception.Create('PutCoilsIntoBuffer: Data array length cannot be less then Count');
 
   BytePtr := Buffer;

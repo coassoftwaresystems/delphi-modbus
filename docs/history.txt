@@ -1,3 +1,4 @@
+- Fix: IdModBusServer: Invalid check on databuffer length when reading/writing coils.
 - Server sends an error response, when the received request contains invalid data.
 - Additional length check on buffers when handling register and coil read/writes.
 
