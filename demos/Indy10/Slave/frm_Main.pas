@@ -45,10 +45,11 @@ type
     Splitter1: TSplitter;
     msrPLC: TIdModBusServer;
     procedure msrPLCReadHoldingRegisters(const Sender: TIdContext; const RegNr,
-      Count: Integer; var Data: TModRegisterData; const RequestBuffer: TModBusRequestBuffer);
+      Count: Integer; var Data: TModRegisterData; const RequestBuffer: TModBusRequestBuffer;
+      var ErrorCode: Byte);
     procedure msrPLCWriteRegisters(const Sender: TIdContext;
       const RegNr, Count: Integer; const Data: TModRegisterData;
-      const RequestBuffer: TModBusRequestBuffer);
+      const RequestBuffer: TModBusRequestBuffer; var ErrorCode: Byte);
     procedure btnStartClick(Sender: TObject);
     procedure FormCreate(Sender: TObject);
     procedure FormShow(Sender: TObject);
@@ -93,7 +94,7 @@ end;
 
 procedure TfrmMain.msrPLCReadHoldingRegisters(const Sender: TIdContext;
   const RegNr, Count: Integer; var Data: TModRegisterData;
-  const RequestBuffer: TModBusRequestBuffer);
+  const RequestBuffer: TModBusRequestBuffer; var ErrorCode: Byte);
 var
   i: Integer;
 begin
@@ -104,7 +105,7 @@ end;
 
 procedure TfrmMain.msrPLCWriteRegisters(const Sender: TIdContext;
   const RegNr, Count: Integer; const Data: TModRegisterData;
-  const RequestBuffer: TModBusRequestBuffer);
+  const RequestBuffer: TModBusRequestBuffer; var ErrorCode: Byte);
 var
   i: Integer;
 begin

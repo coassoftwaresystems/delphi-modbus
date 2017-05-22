@@ -4,7 +4,7 @@ Demos are available based on Indy 9 and Indy 10 implementation
 
 Indy9: Demos created in Delphi 7, and should also work on Delphi 5 and 6.
        (to open under earlier Delphi versions: delete *.dof).
-Indy10: Demos created in Delphi 2010, and should also work on Delphi 2005-XE8.
+Indy10: Demos created in Delphi XE, and should also work on higher Delphi versions.
         (to open under earlier Delphi versions: delete *.dproj).
 
 In addition cross platform demos are available:
@@ -34,7 +34,7 @@ compiler will not be able to locate the DelphiModbus units.
 When you want to compile and run the demos from a Delphi version which differs
 from the version it was created in (see above), you should first open each form
 in the demo in the form designer, and ignore any errors about missing properties
-it might generate. When such message appears, save the modified form.
+it might generate. When such message appears, save the modified form afterwards.
 
 After taking these steps into account, the demos can be compiled and run from
 the IDE.
