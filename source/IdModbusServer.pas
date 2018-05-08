@@ -212,6 +212,7 @@ type
   {$IFNDEF DMB_INDY10}
     constructor Create(AOwner: TComponent); override;
   {$ENDIF}
+    destructor Destroy(); override;
   { public properties }
     property Pause: Boolean read FPause write FPause;
   published
@@ -274,6 +275,14 @@ begin
   FOnWriteRegisters := nil;
   FPause := False;
   FUnitID := MB_IGNORE_UNITID;
+end;
+
+
+destructor TIdModBusServer.Destroy();
+begin
+  inherited;
+  // freed AFTER inherited destructor because this will first stop the server
+  FLogCriticalSection.Free();
 end;
 
 
