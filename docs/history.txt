@@ -1,3 +1,10 @@
+Version 1.6.8 - December 19, 2018
+=================================
+- Fix: IdModBusServer: Invalid check on databuffer length when reading/writing coils.
+- Server sends an error response, when the received request contains invalid data.
+- Additional length check on buffers when handling register and coil read/writes.
+- Added support for Delphi 10.3 Rio.
+
 Version 1.6.7 - March 28, 2017
 ==============================
 - Added support for Delphi 10.2 Tokyo.

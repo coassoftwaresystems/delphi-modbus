@@ -1,0 +1,48 @@
+﻿<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+    <PropertyGroup>
+        <ProjectGuid>{A8A21CA0-9664-4FFB-9157-DA0DCCD32446}</ProjectGuid>
+    </PropertyGroup>
+    <ItemGroup>
+        <Projects Include="DelphiModbus103Rio.dproj">
+            <Dependencies/>
+        </Projects>
+        <Projects Include="dclDelphiModbus103Rio.dproj">
+            <Dependencies/>
+        </Projects>
+    </ItemGroup>
+    <ProjectExtensions>
+        <Borland.Personality>Default.Personality.12</Borland.Personality>
+        <Borland.ProjectType/>
+        <BorlandProject>
+            <Default.Personality/>
+        </BorlandProject>
+    </ProjectExtensions>
+    <Target Name="DelphiModbus103Rio">
+        <MSBuild Projects="DelphiModbus103Rio.dproj"/>
+    </Target>
+    <Target Name="DelphiModbus103Rio:Clean">
+        <MSBuild Projects="DelphiModbus103Rio.dproj" Targets="Clean"/>
+    </Target>
+    <Target Name="DelphiModbus103Rio:Make">
+        <MSBuild Projects="DelphiModbus103Rio.dproj" Targets="Make"/>
+    </Target>
+    <Target Name="dclDelphiModbus103Rio">
+        <MSBuild Projects="dclDelphiModbus103Rio.dproj"/>
+    </Target>
+    <Target Name="dclDelphiModbus103Rio:Clean">
+        <MSBuild Projects="dclDelphiModbus103Rio.dproj" Targets="Clean"/>
+    </Target>
+    <Target Name="dclDelphiModbus103Rio:Make">
+        <MSBuild Projects="dclDelphiModbus103Rio.dproj" Targets="Make"/>
+    </Target>
+    <Target Name="Build">
+        <CallTarget Targets="DelphiModbus103Rio;dclDelphiModbus103Rio"/>
+    </Target>
+    <Target Name="Clean">
+        <CallTarget Targets="DelphiModbus103Rio:Clean;dclDelphiModbus103Rio:Clean"/>
+    </Target>
+    <Target Name="Make">
+        <CallTarget Targets="DelphiModbus103Rio:Make;dclDelphiModbus103Rio:Make"/>
+    </Target>
+    <Import Project="$(BDS)\Bin\CodeGear.Group.Targets" Condition="Exists('$(BDS)\Bin\CodeGear.Group.Targets')"/>
+</Project>

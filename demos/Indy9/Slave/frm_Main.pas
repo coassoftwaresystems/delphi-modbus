@@ -47,10 +47,10 @@ type
     Timer1: TTimer;
     procedure msrPLCReadHoldingRegisters(const Sender: TIdPeerThread; const RegNr,
       Count: Integer; var Data: TModRegisterData;
-      const RequestBuffer: TModbusRequestBuffer);
+      const RequestBuffer: TModbusRequestBuffer; var ErrorCode: Byte);
     procedure msrPLCWriteRegisters(const Sender: TIdPeerThread;
       const RegNr, Count: Integer; const Data: TModRegisterData;
-      const RequestBuffer: TModbusRequestBuffer);
+      const RequestBuffer: TModbusRequestBuffer; var ErrorCode: Byte);
     procedure btnStartClick(Sender: TObject);
     procedure FormCreate(Sender: TObject);
     procedure FormShow(Sender: TObject);
@@ -95,7 +95,7 @@ end; { IntToBinary }
 
 procedure TfrmMain.msrPLCReadHoldingRegisters(const Sender: TIdPeerThread;
   const RegNr, Count: Integer; var Data: TModRegisterData;
-  const RequestBuffer: TModbusRequestBuffer);
+  const RequestBuffer: TModbusRequestBuffer; var ErrorCode: Byte);
 var
   i: Integer;
 begin
@@ -106,7 +106,7 @@ end; { msrPLCReadRegisters }
 
 procedure TfrmMain.msrPLCWriteRegisters(const Sender: TIdPeerThread;
   const RegNr, Count: Integer; const Data: TModRegisterData;
-  const RequestBuffer: TModbusRequestBuffer);
+  const RequestBuffer: TModbusRequestBuffer; var ErrorCode: Byte);
 var
   i: Integer;
 begin
