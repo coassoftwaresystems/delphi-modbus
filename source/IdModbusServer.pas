@@ -94,20 +94,7 @@ type
 {$ENDIF}
 
 type
-{$IFDEF DMB_DELPHIXE3}
-  [ComponentPlatformsAttribute(pidWin32 or pidWin64 or
-                               pidLinux32 or
-  {$IFDEF DMB_DELPHIXE5}
-                               pidAndroid or
-  {$ENDIF}
-  {$IFDEF DMB_DELPHIXE4}
-                               pidiOSDevice or pidiOSSimulator or
-  {$ENDIF}
-  {$IFDEF DMB_DELPHIXE8}
-                               pidiOSDevice64 or
-  {$ENDIF}
-                               pidOSX32)]
-{$ENDIF}
+{$I ModBusPlatforms.inc}
 {$IFDEF DMB_INDY10}
   TIdModBusServer = class(TIdCustomTCPServer)
 {$ELSE}

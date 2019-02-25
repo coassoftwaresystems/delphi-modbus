@@ -46,20 +46,7 @@ type
     const ResponseFunctionCode: Byte; const ResponseBuffer: TModBusResponseBuffer) of object;
 
 type
-{$IFDEF DMB_DELPHIXE3}
-  [ComponentPlatformsAttribute(pidWin32 or pidWin64 or
-                               pidLinux32 or
-  {$IFDEF DMB_DELPHIXE5}
-                               pidAndroid or
-  {$ENDIF}
-  {$IFDEF DMB_DELPHIXE4}
-                               pidiOSDevice or pidiOSSimulator or
-  {$ENDIF}
-  {$IFDEF DMB_DELPHIXE8}
-                               pidiOSDevice64 or
-  {$ENDIF}
-                               pidOSX32)]
-{$ENDIF}
+{$I ModBusPlatforms.inc}
   TIdModBusClient = class(TIdTCPClient)
   private
     FAutoConnect: Boolean;
