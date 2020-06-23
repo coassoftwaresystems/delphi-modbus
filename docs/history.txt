@@ -1,3 +1,7 @@
+Version 1.6.9 -
+=================================
+- Added support for Delphi 10.4 Sydney.
+
 Version 1.6.8 - December 19, 2018
 =================================
 - Fix: IdModBusServer: Invalid check on databuffer length when reading/writing coils.
