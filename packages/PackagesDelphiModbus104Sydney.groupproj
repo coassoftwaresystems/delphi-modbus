@@ -1,0 +1,48 @@
+﻿<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+    <PropertyGroup>
+        <ProjectGuid>{A8A21CA0-9664-4FFB-9157-DA0DCCD32446}</ProjectGuid>
+    </PropertyGroup>
+    <ItemGroup>
+        <Projects Include="DelphiModbus104Sydney.dproj">
+            <Dependencies/>
+        </Projects>
+        <Projects Include="dclDelphiModbus104Sydney.dproj">
+            <Dependencies/>
+        </Projects>
+    </ItemGroup>
+    <ProjectExtensions>
+        <Borland.Personality>Default.Personality.12</Borland.Personality>
+        <Borland.ProjectType/>
+        <BorlandProject>
+            <Default.Personality/>
+        </BorlandProject>
+    </ProjectExtensions>
+    <Target Name="DelphiModbus104Sydney">
+        <MSBuild Projects="DelphiModbus104Sydney.dproj"/>
+    </Target>
+    <Target Name="DelphiModbus104Sydney:Clean">
+        <MSBuild Projects="DelphiModbus104Sydney.dproj" Targets="Clean"/>
+    </Target>
+    <Target Name="DelphiModbus104Sydney:Make">
+        <MSBuild Projects="DelphiModbus104Sydney.dproj" Targets="Make"/>
+    </Target>
+    <Target Name="dclDelphiModbus104Sydney">
+        <MSBuild Projects="dclDelphiModbus104Sydney.dproj"/>
+    </Target>
+    <Target Name="dclDelphiModbus104Sydney:Clean">
+        <MSBuild Projects="dclDelphiModbus104Sydney.dproj" Targets="Clean"/>
+    </Target>
+    <Target Name="dclDelphiModbus104Sydney:Make">
+        <MSBuild Projects="dclDelphiModbus104Sydney.dproj" Targets="Make"/>
+    </Target>
+    <Target Name="Build">
+        <CallTarget Targets="DelphiModbus104Sydney;dclDelphiModbus104Sydney"/>
+    </Target>
+    <Target Name="Clean">
+        <CallTarget Targets="DelphiModbus104Sydney:Clean;dclDelphiModbus104Sydney:Clean"/>
+    </Target>
+    <Target Name="Make">
+        <CallTarget Targets="DelphiModbus104Sydney:Make;dclDelphiModbus104Sydney:Make"/>
+    </Target>
+    <Import Project="$(BDS)\Bin\CodeGear.Group.Targets" Condition="Exists('$(BDS)\Bin\CodeGear.Group.Targets')"/>
+</Project>
