@@ -18,7 +18,7 @@
   {$IFDEF DMB_DELPHI10_3_RIO}
                                pidOSX32 or pidOSX64 or
   {$ELSE}
-                               pidOSX or
+                               pidOSX32 or
   {$ENDIF}
                                0)] // Make statement complete with 0 (which is harmless)
 {$ENDIF}
