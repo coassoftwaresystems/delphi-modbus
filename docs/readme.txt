@@ -7,11 +7,10 @@ supported.
 
 Supported Delphi versions
 =========================
-The components can be used in Delphi versions 5, 6, 7, 2005, 2006, 2007, 2009,
-2010, XE, XE2, XE3, XE4, XE5, XE6, XE7, XE8, 10 Seattle, 10.1 Berlin and 
-10.2 Tokyo. The components are based on the Internet Direct (aka 'Indy') 
-components, which ship with Delphi versions 6 and up. Only native development 
-is supported (no .NET version is available).
+The components can be used in Delphi versions 5 and higher. The components 
+are based on the Internet Direct (aka 'Indy') components, which ship with 
+Delphi versions 6 and up. Only native development is supported (no .NET 
+version is available).
 
 For Delphi 5 and 6, you should download the latest Indy version 9.0 from the
 Indy website at http://www.indyproject.org/. At the moment of this writing,

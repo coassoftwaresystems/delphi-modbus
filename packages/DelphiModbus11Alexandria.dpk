@@ -1,0 +1,46 @@
+package DelphiModbus11Alexandria;
+
+{$R *.res}
+{$IFDEF IMPLICITBUILDING This IFDEF should not be used by users}
+{$ALIGN 8}
+{$ASSERTIONS ON}
+{$BOOLEVAL OFF}
+{$DEBUGINFO OFF}
+{$EXTENDEDSYNTAX ON}
+{$IMPORTEDDATA ON}
+{$IOCHECKS ON}
+{$LOCALSYMBOLS ON}
+{$LONGSTRINGS ON}
+{$OPENSTRINGS ON}
+{$OPTIMIZATION OFF}
+{$OVERFLOWCHECKS OFF}
+{$RANGECHECKS OFF}
+{$REFERENCEINFO ON}
+{$SAFEDIVIDE OFF}
+{$STACKFRAMES ON}
+{$TYPEDADDRESS OFF}
+{$VARSTRINGCHECKS ON}
+{$WRITEABLECONST OFF}
+{$MINENUMSIZE 1}
+{$IMAGEBASE $400000}
+{$DEFINE DEBUG}
+{$ENDIF IMPLICITBUILDING}
+{$DESCRIPTION 'Delphi Modbus components runtime package'}
+{$RUNONLY}
+{$IMPLICITBUILD OFF}
+
+requires
+  rtl,
+  IndyCore,
+  IndyProtocols,
+  IndySystem;
+
+contains
+  IdModbusClient in '..\source\IdModbusClient.pas',
+  IdModbusServer in '..\source\IdModbusServer.pas',
+  ModbusConsts in '..\source\ModbusConsts.pas',
+  ModbusTypes in '..\source\ModbusTypes.pas',
+  ModbusStrConsts in '..\source\ModbusStrConsts.pas',
+  ModbusUtils in '..\source\ModbusUtils.pas';
+
+end.

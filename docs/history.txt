@@ -1,4 +1,8 @@
-Version 1.6.9 -
+Version 1.6.10
+=================================
+- Added support for Delphi 11 Alexandria.
+
+Version 1.6.9
 =================================
 - Added support for Delphi 10.4 Sydney.
 

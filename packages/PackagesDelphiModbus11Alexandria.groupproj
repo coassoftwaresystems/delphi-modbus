@@ -1,0 +1,48 @@
+﻿<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+    <PropertyGroup>
+        <ProjectGuid>{A8A21CA0-9664-4FFB-9157-DA0DCCD32446}</ProjectGuid>
+    </PropertyGroup>
+    <ItemGroup>
+        <Projects Include="DelphiModbus11Alexandria.dproj">
+            <Dependencies/>
+        </Projects>
+        <Projects Include="dclDelphiModbus11Alexandria.dproj">
+            <Dependencies/>
+        </Projects>
+    </ItemGroup>
+    <ProjectExtensions>
+        <Borland.Personality>Default.Personality.12</Borland.Personality>
+        <Borland.ProjectType/>
+        <BorlandProject>
+            <Default.Personality/>
+        </BorlandProject>
+    </ProjectExtensions>
+    <Target Name="DelphiModbus11Alexandria">
+        <MSBuild Projects="DelphiModbus11Alexandria.dproj"/>
+    </Target>
+    <Target Name="DelphiModbus11Alexandria:Clean">
+        <MSBuild Projects="DelphiModbus11Alexandria.dproj" Targets="Clean"/>
+    </Target>
+    <Target Name="DelphiModbus11Alexandria:Make">
+        <MSBuild Projects="DelphiModbus11Alexandria.dproj" Targets="Make"/>
+    </Target>
+    <Target Name="dclDelphiModbus11Alexandria">
+        <MSBuild Projects="dclDelphiModbus11Alexandria.dproj"/>
+    </Target>
+    <Target Name="dclDelphiModbus11Alexandria:Clean">
+        <MSBuild Projects="dclDelphiModbus11Alexandria.dproj" Targets="Clean"/>
+    </Target>
+    <Target Name="dclDelphiModbus11Alexandria:Make">
+        <MSBuild Projects="dclDelphiModbus11Alexandria.dproj" Targets="Make"/>
+    </Target>
+    <Target Name="Build">
+        <CallTarget Targets="DelphiModbus11Alexandria;dclDelphiModbus11Alexandria"/>
+    </Target>
+    <Target Name="Clean">
+        <CallTarget Targets="DelphiModbus11Alexandria:Clean;dclDelphiModbus11Alexandria:Clean"/>
+    </Target>
+    <Target Name="Make">
+        <CallTarget Targets="DelphiModbus11Alexandria:Make;dclDelphiModbus11Alexandria:Make"/>
+    </Target>
+    <Import Project="$(BDS)\Bin\CodeGear.Group.Targets" Condition="Exists('$(BDS)\Bin\CodeGear.Group.Targets')"/>
+</Project>
