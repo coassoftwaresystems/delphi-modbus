@@ -1,0 +1,48 @@
+﻿<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+    <PropertyGroup>
+        <ProjectGuid>{45F9476B-22CE-429A-9796-F37870CF3483}</ProjectGuid>
+    </PropertyGroup>
+    <ItemGroup>
+        <Projects Include="DelphiModbus12Athens.dproj">
+            <Dependencies/>
+        </Projects>
+        <Projects Include="dclDelphiModbus12Athens.dproj">
+            <Dependencies/>
+        </Projects>
+    </ItemGroup>
+    <ProjectExtensions>
+        <Borland.Personality>Default.Personality.12</Borland.Personality>
+        <Borland.ProjectType/>
+        <BorlandProject>
+            <Default.Personality/>
+        </BorlandProject>
+    </ProjectExtensions>
+    <Target Name="DelphiModbus12Athens">
+        <MSBuild Projects="DelphiModbus12Athens.dproj"/>
+    </Target>
+    <Target Name="DelphiModbus12Athens:Clean">
+        <MSBuild Projects="DelphiModbus12Athens.dproj" Targets="Clean"/>
+    </Target>
+    <Target Name="DelphiModbus12Athens:Make">
+        <MSBuild Projects="DelphiModbus12Athens.dproj" Targets="Make"/>
+    </Target>
+    <Target Name="dclDelphiModbus12Athens">
+        <MSBuild Projects="dclDelphiModbus12Athens.dproj"/>
+    </Target>
+    <Target Name="dclDelphiModbus12Athens:Clean">
+        <MSBuild Projects="dclDelphiModbus12Athens.dproj" Targets="Clean"/>
+    </Target>
+    <Target Name="dclDelphiModbus12Athens:Make">
+        <MSBuild Projects="dclDelphiModbus12Athens.dproj" Targets="Make"/>
+    </Target>
+    <Target Name="Build">
+        <CallTarget Targets="DelphiModbus12Athens;dclDelphiModbus12Athens"/>
+    </Target>
+    <Target Name="Clean">
+        <CallTarget Targets="DelphiModbus12Athens:Clean;dclDelphiModbus12Athens:Clean"/>
+    </Target>
+    <Target Name="Make">
+        <CallTarget Targets="DelphiModbus12Athens:Make;dclDelphiModbus12Athens:Make"/>
+    </Target>
+    <Import Project="$(BDS)\Bin\CodeGear.Group.Targets" Condition="Exists('$(BDS)\Bin\CodeGear.Group.Targets')"/>
+</Project>
