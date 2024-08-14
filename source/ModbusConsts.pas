@@ -43,7 +43,8 @@ const
   mbfWriteOneCoil = $05;
   mbfWriteOneReg = $06;
   mbfWriteCoils = $0F;
-  mbfWriteRegs = $10;
+  mbfWriteRegs = $10;   
+  mbfReportSlaveID = $11;
   mbfReadFileRecord = $14;
   mbfWriteFileRecord = $15;
   mbfMaskWriteReg = $16;

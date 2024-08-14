@@ -95,6 +95,7 @@ type
     function ReadInputRegisters(const RegNo: Word; const Blocks: Word; var RegisterData: array of Word): Boolean;
     function ReadSingle(const RegNo: Word; out Value: Single): Boolean;
     function ReadString(const RegNo: Word; const ALength: Word): String;
+    function ReportSlaveID(const Blocks: Word; out RegisterData: array of Word):boolean;
     function WriteCoil(const RegNo: Word; const Value: Boolean): Boolean;
     function WriteCoils(const RegNo: Word; const Blocks: Word; const RegisterData: array of Boolean): Boolean;
     function WriteRegister(const RegNo: Word; const Value: Word): Boolean;
@@ -235,6 +236,16 @@ begin
         SendBuffer.MBPData[3] := Lo(BlockLength);
         SendBuffer.Header.RecLength := Swap16(6); { This includes UnitID/FuntionCode }
       end;
+    mbfReportSlaveID:
+      begin
+        BlockLength := ABlockLength;
+        if (BlockLength > 125) then
+          BlockLength := 125; { Don't exceed max length }
+      { Initialise the data part }
+        SendBuffer.FunctionCode := Byte(AModBusFunction); { Write appropriate function code }
+        SendBuffer.Header.UnitID := FUnitID;
+        SendBuffer.Header.RecLength := Swap16(2); { This includes UnitID/FuntionCode }
+      end;
     mbfWriteOneCoil:
       begin
       { Initialise the data part }
@@ -346,6 +357,11 @@ begin
           if (BlockLength > 2000) then
             BlockLength := 2000;
           GetCoilsFromBuffer(@ReceiveBuffer.MBPData[1], BlockLength, Data);
+        end;
+      mbfReportSlaveID:
+        begin
+          BlockLength := Swap16(ReceiveBuffer.Header.RecLength) - 2;
+          GetReportFromBuffer(@ReceiveBuffer.MBPData[0], BlockLength, Data);
         end;
       mbfReadHoldingRegs,
       mbfReadInputRegs:
@@ -585,6 +601,29 @@ begin
   end;
 end;
 
+function TIdModbusClient.ReportSlaveID(const Blocks: Word; out RegisterData: array of Word): Boolean;
+var
+  bNewConnection: Boolean;
+  i: integer;
+begin
+  bNewConnection := False;
+  if FAutoConnect and not Connected then
+  begin
+  {$IFDEF DMB_INDY10}
+    Connect;
+  {$ELSE}
+    Connect(FConnectTimeOut);
+  {$ENDIF}
+    bNewConnection := True;
+  end;
+  FillChar(RegisterData[0], Length(RegisterData), 0);
+  try
+    Result := SendCommand(mbfReportSlaveID, 1, 2, RegisterData);
+  finally
+    if bNewConnection then
+      DisConnect;
+  end;
+end;
 
 function TIdModBusClient.GetVersion: String;
 begin

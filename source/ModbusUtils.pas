@@ -38,6 +38,8 @@ function Swap16(const DataToSwap: Word): Word;
 procedure GetCoilsFromBuffer(const Buffer: PByte; const Count: Word; var Data: array of Word);
 procedure PutCoilsIntoBuffer(const Buffer: PByte; const Count: Word; const Data: array of Word);
 
+procedure GetReportFromBuffer(const Buffer: PByte; const Count: Word; var Data: array of Word);
+
 procedure GetRegistersFromBuffer(const Buffer: PWord; const Count: Word; var Data: array of Word);
 procedure PutRegistersIntoBuffer(const Buffer: PWord; const Count: Word; const Data: array of Word);
 
@@ -205,6 +207,22 @@ begin
   end;
 end;
 
+procedure GetReportFromBuffer(const Buffer: PByte; const Count: Word; var Data: array of Word);
+var
+  WordPtr: PByte;
+  i: Word;
+begin
+  if (Length(Data) < (Count - 1)) or (Length(Data) = 0) or (Count = 0) then
+    raise Exception.Create('GetRegistersFromBuffer: Data array length cannot be less then Count');
+
+  WordPtr := Buffer;
+  i:= 0;
+  for i:= 0 to (Count - 1) do
+  begin
+    Data[i] := Lo(WordPtr^);
+    Inc(WordPtr);
+  end;
+end;
 
 procedure PutRegistersIntoBuffer(const Buffer: PWord; const Count: Word; const Data: array of Word);
 var
