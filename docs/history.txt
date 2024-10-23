@@ -1,16 +1,16 @@
-Version 1.6.11
+Version 1.7.3
 =================================
 - Added support for Delphi 12 Athens.
 
-Version 1.6.10
+Version 1.7.2
 =================================
 - Added support for Delphi 11 Alexandria.
 
-Version 1.6.9
+Version 1.7.1
 =================================
 - Added support for Delphi 10.4 Sydney.
 
-Version 1.6.8 - December 19, 2018
+Version 1.7.0 - December 19, 2018
 =================================
 - Fix: IdModBusServer: Invalid check on databuffer length when reading/writing coils.
 - Server sends an error response, when the received request contains invalid data.
