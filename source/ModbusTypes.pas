@@ -32,9 +32,6 @@ unit ModbusTypes;
 interface
 
 type
-  TMaskOperator = (moAnd, moOr);
-
-type
   TModBusFunction = Byte;
 
 type

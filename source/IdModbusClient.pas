@@ -87,7 +87,7 @@ type
     function WriteCoil(const RegNo: Word; const Value: Boolean): Boolean;
     function WriteCoils(const RegNo: Word; const Blocks: Word; const RegisterData: array of Boolean): Boolean;
     function WriteRegister(const RegNo: Word; const Value: Word): Boolean;
-    function WriteRegisterMasked(const RegNo: Word; const Value: Word; const Operation: TMaskOperator): Boolean;
+    function WriteRegisterMasked(const RegNo: Word; const AndMask: Word; const OrMask: Word): Boolean;
     function WriteRegisters(const RegNo: Word; const RegisterData: array of Word): Boolean;
     function WriteDouble(const RegNo: Word; const Value: Double): Boolean;
     function WriteDWord(const RegNo: Word; const Value: DWord): Boolean;
@@ -172,6 +172,18 @@ begin
   RegNumber := ARegNumber - FBaseRegister;
 { Perform function code specific operations }
   case AModBusFunction of
+    mbfMaskedWriteReg:
+      begin
+        SendBuffer.FunctionCode := Byte(AModBusFunction); { Write appropriate function code }
+        SendBuffer.Header.UnitID := FUnitID;
+        SendBuffer.MBPData[0] := Hi(RegNumber);
+        SendBuffer.MBPData[1] := Lo(RegNumber);
+        SendBuffer.MBPData[2] := Hi(Data[0]);
+        SendBuffer.MBPData[3] := Lo(Data[0]);
+        SendBuffer.MBPData[4] := Hi(Data[1]);
+        SendBuffer.MBPData[5] := Lo(Data[1]);
+        SendBuffer.Header.RecLength := Swap16(8); { This includes UnitID/FuntionCode }
+      end;
     mbfReadCoils,
     mbfReadInputBits:
       begin
@@ -644,13 +656,14 @@ begin
 end;
 
 
-function TIdModBusClient.WriteRegisterMasked(const RegNo: Word; const Value: Word; const Operation: TMaskOperator): Boolean;
+function TIdModBusClient.WriteRegisterMasked(const RegNo: Word; const AndMask: Word; const OrMask: Word): Boolean;
 var
-  Data: array[0..0] of Word;
+  Data: array[0..1] of Word;
   bNewConnection: Boolean;
 begin
   bNewConnection := False;
-  Data[0] := Value;
+  Data[0] := AndMask;
+  Data[1] := OrMask;
   if FAutoConnect and not Connected then
   begin
     Connect;
