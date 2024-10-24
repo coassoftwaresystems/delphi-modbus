@@ -5,7 +5,7 @@
   {$ENDIF}
   {$IFDEF DMB_DELPHI10_1_BERLIN}
                                pidiOSDevice32 or pidiOSSimulator32 or
-                               pidAndroid32Arm or pidAndroid64Arm or
+                               pidAndroidArm32 or pidAndroidArm64 or
                                pidiOSDevice64 or pidiOSSimulator64 or
   {$ELSE}
     {$IFDEF DMB_DELPHIXE4}

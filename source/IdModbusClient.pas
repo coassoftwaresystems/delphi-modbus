@@ -35,9 +35,7 @@ uses
  ,SysUtils
  ,ModBusConsts
  ,ModbusTypes
-{$IFDEF DMB_DELPHI6}
  ,Types
-{$ENDIF}
  ,IdGlobal
  ,IdTCPClient;
 
@@ -53,9 +51,6 @@ type
   private
     FAutoConnect: Boolean;
     FBaseRegister: Word;
-  {$IFNDEF DMB_INDY10}
-    FConnectTimeOut: Integer;
-  {$ENDIF}
     FOnResponseError: TModbusClientErrorEvent;
     FOnResponseMismatch: TModBusClientResponseMismatchEvent;
     FLastTransactionID: Word;
@@ -70,22 +65,13 @@ type
       const ResponseBuffer: TModBusResponseBuffer);
     procedure DoResponseMismatch(const RequestFunctionCode: Byte; const ResponseFunctionCode: Byte;
       const ResponseBuffer: TModBusResponseBuffer);
-  {$IFDEF DMB_INDY10}
     procedure InitComponent; override;
-  {$ENDIF}
     function SendCommand(const AModBusFunction: TModBusFunction; const ARegNumber: Word;
       const ABlockLength: Word; var Data: array of Word): Boolean;
   public
     property LastTransactionID: Word read FLastTransactionID;
-  {$IFNDEF DMB_INDY10}
-    constructor Create(AOwner: TComponent); override;
-  {$ENDIF}
   { public methods }
-  {$IFDEF DMB_INDY10}
     procedure Connect; override;
-  {$ELSE}
-    procedure Connect(const ATimeout: Integer = IdTimeoutDefault); override;
-  {$ENDIF}
     function ReadCoil(const RegNo: Word; out Value: Boolean): Boolean;
     function ReadCoils(const RegNo: Word; const Blocks: Word; out RegisterData: array of Boolean): Boolean;
     function ReadDouble(const RegNo: Word; out Value: Double): Boolean;
@@ -109,9 +95,6 @@ type
   published
     property AutoConnect: Boolean read FAutoConnect write FAutoConnect default True;
     property BaseRegister: Word read FBaseRegister write FBaseRegister default 1; 
-  {$IFNDEF DMB_INDY10}
-    property ConnectTimeOut: Integer read FConnectTimeOut write FConnectTimeOut default -1;
-  {$ENDIF}
     property ReadTimeout: Integer read FReadTimeout write FReadTimeout default 0;
     property Port default MB_PORT;
     property TimeOut: Cardinal read FTimeOut write FTimeout default 15000;
@@ -131,29 +114,16 @@ uses
 
 { TIdModBusClient }
 
-{$IFDEF DMB_INDY10}
 procedure TIdModBusClient.Connect;
-{$ELSE}
-procedure TIdModBusClient.Connect(const ATimeout: Integer = IdTimeoutDefault);
-{$ENDIF}
 begin
   inherited;
   FLastTransactionID := 0;
 end;
 
 
-{$IFDEF DMB_INDY10}
 procedure TIdModBusClient.InitComponent;
-{$ELSE}
-constructor TIdModBusClient.Create(AOwner: TComponent);
-{$ENDIF}
 begin
-{$IFDEF DMB_INDY10}
   inherited;
-{$ELSE}
-  inherited Create(AOwner);
-  FConnectTimeOut := -1;
-{$ENDIF}
   FAutoConnect := True;
   FBaseRegister := 1;
   FLastTransactionID := 0;
@@ -190,17 +160,11 @@ var
   BlockLength: Word;
   RegNumber: Word;
   dtTimeOut: TDateTime;
-{$IFDEF DMB_INDY10}
   Buffer: TIdBytes;
   RecBuffer: TIdBytes;
   iSize: Integer;
-{$ENDIF}
 begin
-{$IFDEF DMB_INDY10}
   CheckForGracefulDisconnect(True);
-{$ELSE}
-  CheckForDisconnect(True, True);
-{$ENDIF}
   SendBuffer.Header.TransactionID := GetNewTransactionID;
   SendBuffer.Header.ProtocolID := MB_PROTOCOL;
 { Initialise data related variables }
@@ -309,29 +273,16 @@ begin
       end;
   end;
 { Writeout the data to the connection }
-{$IFDEF DMB_INDY10}
   Buffer := RawToBytes(SendBuffer, Swap16(SendBuffer.Header.RecLength) + 6);
   IOHandler.WriteDirect(Buffer);
-{$ELSE}
-  WriteBuffer(SendBuffer, Swap16(SendBuffer.Header.RecLength) + 6);
-{$ENDIF}
 
 {*** Wait for data from the PLC ***}
   if (FTimeOut > 0) then
   begin
     dtTimeOut := Now + (FTimeOut / 86400000);
-  {$IFDEF DMB_INDY10}
     while (IOHandler.InputBuffer.Size = 0) do
-  {$ELSE}
-    while (InputBuffer.Size = 0) do
-  {$ENDIF}
     begin
-   {$IFDEF DMB_INDY10}
       IOHandler.CheckForDataOnSource(FReadTimeout);
-   {$ELSE}
-      if Socket.Binding.Readable(FReadTimeout) then
-        ReadFromStack;
-    {$ENDIF}
       if (Now > dtTimeOut) then
       begin
         Result := False;
@@ -341,13 +292,9 @@ begin
   end;
 
   Result := True;
-{$IFDEF DMB_INDY10}
   iSize := IOHandler.InputBuffer.Size;
   IOHandler.ReadBytes(RecBuffer, iSize);
   Move(RecBuffer[0], ReceiveBuffer, iSize);
-{$ELSE}
-  ReadBuffer(ReceiveBuffer, InputBuffer.Size);
-{$ENDIF}
 { Check if the result has the same function code as the request }
   if (AModBusFunction = ReceiveBuffer.FunctionCode) then
   begin
@@ -416,11 +363,7 @@ begin
   bNewConnection := False;
   if FAutoConnect and not Connected then
   begin
-  {$IFDEF DMB_INDY10}
     Connect;
-  {$ELSE}
-    Connect(FConnectTimeOut);
-  {$ENDIF}
     bNewConnection := True;
   end;
 
@@ -447,11 +390,7 @@ begin
   bNewConnection := False;
   if FAutoConnect and not Connected then
   begin
-  {$IFDEF DMB_INDY10}
     Connect;
-  {$ELSE}
-    Connect(FConnectTimeOut);
-  {$ENDIF}
     bNewConnection := True;
   end;
 
@@ -485,11 +424,7 @@ begin
   bNewConnection := False;
   if FAutoConnect and not Connected then
   begin
-  {$IFDEF DMB_INDY10}
     Connect;
-  {$ELSE}
-    Connect(FConnectTimeOut);
-  {$ENDIF}
     bNewConnection := True;
   end;
 
@@ -521,11 +456,7 @@ begin
   bNewConnection := False;
   if FAutoConnect and not Connected then
   begin
-  {$IFDEF DMB_INDY10}
     Connect;
-  {$ELSE}
-    Connect(FConnectTimeOut);
-  {$ENDIF}
     bNewConnection := True;
   end;
 
@@ -606,16 +537,11 @@ end;
 function TIdModbusClient.ReportSlaveID(const Blocks: Word; out RegisterData: array of Word): Boolean;
 var
   bNewConnection: Boolean;
-  i: integer;
 begin
   bNewConnection := False;
   if FAutoConnect and not Connected then
   begin
-  {$IFDEF DMB_INDY10}
     Connect;
-  {$ELSE}
-    Connect(FConnectTimeOut);
-  {$ENDIF}
     bNewConnection := True;
   end;
   FillChar(RegisterData[0], Length(RegisterData), 0);
@@ -702,11 +628,7 @@ begin
   Data[0] := Value;
   if FAutoConnect and not Connected then
   begin
-  {$IFDEF DMB_INDY10}
     Connect;
-  {$ELSE}
-    Connect(FConnectTimeOut);
-  {$ENDIF}
     bNewConnection := True;
   end;
 
@@ -731,11 +653,7 @@ begin
   iBlockLength := High(RegisterData) - Low(RegisterData) + 1;
   if FAutoConnect and not Connected then
   begin
-  {$IFDEF DMB_INDY10}
     Connect;
-  {$ELSE}
-    Connect(FConnectTimeOut);
-  {$ENDIF}
     bNewConnection := True;
   end;
 
@@ -764,11 +682,7 @@ begin
 
   if FAutoConnect and not Connected then
   begin
-  {$IFDEF DMB_INDY10}
     Connect;
-  {$ELSE}
-    Connect(FConnectTimeOut);
-  {$ENDIF}
     bNewConnection := True;
   end;
 
@@ -792,11 +706,7 @@ begin
   iBlockLength := High(RegisterData) - Low(RegisterData) + 1;
   if FAutoConnect and not Connected then
   begin
-  {$IFDEF DMB_INDY10}
     Connect;
-  {$ELSE}
-    Connect(FConnectTimeOut);
-  {$ENDIF}
     bNewConnection := True;
   end;
 

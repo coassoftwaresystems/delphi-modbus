@@ -31,13 +31,8 @@ unit AboutComponentEditor;
 interface
 
 uses
-{$IFDEF DMB_DELPHI6}
   DesignIntf
- ,DesignEditors
-{$ELSE}
-  DsgnIntf
-{$ENDIF}
-  ;
+ ,DesignEditors;
 
 type
   TAboutComponentEditor = class(TDefaultEditor)

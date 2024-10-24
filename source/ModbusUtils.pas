@@ -218,8 +218,7 @@ begin
     raise Exception.Create('GetRegistersFromBuffer: Data array length cannot be less then Count');
 
   WordPtr := Buffer;
-  i:= 0;
-  for i:= 0 to (Count - 1) do
+  for i := 0 to (Count - 1) do
   begin
     Data[i] := Lo(WordPtr^);
     Inc(WordPtr);

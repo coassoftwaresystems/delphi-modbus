@@ -37,22 +37,16 @@ implementation
 
 uses
   Classes
-{$IFDEF DMB_DELPHI6}
- ,DesignIntf
-{$ELSE}
 {$IFDEF FPC}
  ,LazarusPackageIntf
 {$ELSE}
- ,DsgnIntf
-{$ENDIF}
+ ,DesignIntf
 {$ENDIF}
  ,IdModbusClient
  ,IdModbusServer
 {$IFNDEF FPC}
-{$IFDEF DMB_DELPHI2005}
- ,ModbusSplash
-{$ENDIF}
  ,AboutComponentEditor
+ ,ModbusSplash
 {$ENDIF}
  ,ModbusStrConsts;
 
@@ -69,14 +63,10 @@ begin
   RegisterPropertyEditor(TypeInfo(String), TIdModbusClient, 'Version', TAboutPropertyEditor);
   RegisterPropertyEditor(TypeInfo(String), TIdModbusServer, 'Version', TAboutPropertyEditor);
 {$ENDIF}
-{$IFDEF DMB_DELPHI6}
 { Register the property categories for the client component }
   RegisterPropertyInCategory(sModbus, TIdModbusClient, 'AutoConnect');
   RegisterPropertyInCategory(sModbus, TIdModbusClient, 'BaseRegister');
   RegisterPropertyInCategory(sModbus, TIdModbusClient, 'BlockLength');
-{$IFNDEF DMB_INDY10}
-  RegisterPropertyInCategory(sModbus, TIdModbusClient, 'ConnectTimeOut');
-{$ENDIF}
   RegisterPropertyInCategory(sModbus, TIdModbusClient, 'ReadTimeout');
   RegisterPropertyInCategory(sModbus, TIdModbusClient, 'TimeOut');
   RegisterPropertyInCategory(sModbus, TIdModbusClient, 'UnitID');
@@ -104,10 +94,8 @@ begin
   RegisterPropertyInCategory(sModbus, TIdModbusServer, 'OnReadInputRegisters');
   RegisterPropertyInCategory(sModbus, TIdModbusServer, 'OnWriteCoils');
   RegisterPropertyInCategory(sModbus, TIdModbusServer, 'OnWriteRegisters');
-{$ENDIF}
-{$IFDEF DMB_DELPHI2005}
+
   RegisterIDEPlugins;
-{$ENDIF}
 end;
 
 

@@ -48,12 +48,9 @@ type
 
 
 procedure AddToAboutBox(const AImage: HBITMAP);
-{$IFDEF DMB_DELPHI2005}
 var
   AboutBoxServices: IOTAAboutBoxServices;
-{$ENDIF}
 begin
-{$IFDEF DMB_DELPHI2005}
   if BorlandIDEServices.SupportsService(IOTAAboutBoxServices) then
   begin
     AboutBoxServices := BorlandIDEServices.GetService(IOTAAboutBoxServices) as IOTAAboutBoxServices;
@@ -68,20 +65,17 @@ begin
         ,'Delphi Modbus');
     end;
   end;
-{$ENDIF}
 end;
 
 
 procedure AddToSplash(const AImage: HBITMAP);
 begin
-{$IFDEF DMB_DELPHI2005}
   SplashScreenServices.AddPluginBitmap(
     'Delphi ModbusTCP components ' + DMB_VERSION
    ,AImage
    ,False
    ,'Open source'
    ,'');
-{$ENDIF}
 end;
 
 
@@ -106,19 +100,15 @@ end;
 
 
 procedure CleanupIDE;
-{$IFDEF DMB_DELPHI2005}
 var
   AboutBoxServices: IOTAAboutBoxServices;
-{$ENDIF}
 begin
-{$IFDEF DMB_DELPHI2005}
   if (PluginIndex >= 0) and BorlandIDEServices.SupportsService(IOTAAboutBoxServices) then
   begin
     AboutBoxServices := BorlandIDEServices.GetService(IOTAAboutBoxServices) as IOTAAboutBoxServices;
     if (AboutBoxServices <> nil) then
       AboutBoxServices.RemovePluginInfo(PluginIndex);
   end;
-{$ENDIF}
 end;
 
 
