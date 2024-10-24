@@ -49,7 +49,7 @@ const
   mbfReportSlaveID = $11;
   mbfReadFileRecord = $14;
   mbfWriteFileRecord = $15;
-  mbfMaskWriteReg = $16;
+  mbfMaskedWriteReg = $16;
   mbfReadWriteRegs = $17;
   mbfReadFiFoQueue = $18;
 

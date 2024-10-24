@@ -87,6 +87,7 @@ type
     function WriteCoil(const RegNo: Word; const Value: Boolean): Boolean;
     function WriteCoils(const RegNo: Word; const Blocks: Word; const RegisterData: array of Boolean): Boolean;
     function WriteRegister(const RegNo: Word; const Value: Word): Boolean;
+    function WriteRegisterMasked(const RegNo: Word; const Value: Word; const Operation: TMaskOperator): Boolean;
     function WriteRegisters(const RegNo: Word; const RegisterData: array of Word): Boolean;
     function WriteDouble(const RegNo: Word; const Value: Double): Boolean;
     function WriteDWord(const RegNo: Word; const Value: DWord): Boolean;
@@ -534,6 +535,7 @@ begin
   end;
 end;
 
+
 function TIdModbusClient.ReportSlaveID(const Blocks: Word; out RegisterData: array of Word): Boolean;
 var
   bNewConnection: Boolean;
@@ -552,6 +554,7 @@ begin
       DisConnect;
   end;
 end;
+
 
 function TIdModBusClient.GetVersion: String;
 begin
@@ -634,6 +637,28 @@ begin
 
   try
     Result := SendCommand(mbfWriteOneReg, RegNo, 0, Data);
+  finally
+    if bNewConnection then
+      DisConnect;
+  end;
+end;
+
+
+function TIdModBusClient.WriteRegisterMasked(const RegNo: Word; const Value: Word; const Operation: TMaskOperator): Boolean;
+var
+  Data: array[0..0] of Word;
+  bNewConnection: Boolean;
+begin
+  bNewConnection := False;
+  Data[0] := Value;
+  if FAutoConnect and not Connected then
+  begin
+    Connect;
+    bNewConnection := True;
+  end;
+
+  try
+    Result := SendCommand(mbfMaskedWriteReg, RegNo, 0, Data);
   finally
     if bNewConnection then
       DisConnect;
