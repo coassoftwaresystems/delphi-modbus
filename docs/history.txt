@@ -1,6 +1,14 @@
+Version 2.0.0
+=================================
+- Drop support for old Delphi versions (before 2007), and drop support for Indy 9.
+- New Modbus client functions:
+  - 22 (0x16) Mask Write Register
+
 Version 1.7.3
 =================================
 - Added support for Delphi 12 Athens.
+- New Modbus client function:
+  - 17 (0x11) Report Slave ID
 
 Version 1.7.2
 =================================
