@@ -217,9 +217,6 @@ begin
       end;
     mbfReportSlaveID:
       begin
-        BlockLength := ABlockLength;
-        if (BlockLength > 125) then
-          BlockLength := 125; { Don't exceed max length }
       { Initialise the data part }
         SendBuffer.FunctionCode := Byte(AModBusFunction); { Write appropriate function code }
         SendBuffer.Header.UnitID := FUnitID;
