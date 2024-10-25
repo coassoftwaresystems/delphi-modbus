@@ -42,6 +42,8 @@ uses
 type
   TModBusClientErrorEvent = procedure(const FunctionCode: Byte;
     const ErrorCode: Byte; const ResponseBuffer: TModBusResponseBuffer) of object;
+  TModbusClientHandleResponse = procedure(const ResponseBuffer: TModBusResponseBuffer;
+    out RegisterData: array of Word) of object;
   TModBusClientResponseMismatchEvent = procedure(const RequestFunctionCode: Byte;
     const ResponseFunctionCode: Byte; const ResponseBuffer: TModBusResponseBuffer) of object;
 
@@ -60,6 +62,16 @@ type
     function GetVersion: String;
     procedure SetVersion(const Value: String);
     function GetNewTransactionID: Word;
+    procedure HandleReadCoilsResponse(const ResponseBuffer: TModBusResponseBuffer;
+      out RegisterData: array of Word);
+    procedure HandleReadInputBitsResponse(const ResponseBuffer: TModBusResponseBuffer;
+      out RegisterData: array of Word);
+    procedure HandleReadHoldingRegistersResponse(const ResponseBuffer: TModBusResponseBuffer;
+      out RegisterData: array of Word);
+    procedure HandleReadInputRegistersResponse(const ResponseBuffer: TModBusResponseBuffer;
+      out RegisterData: array of Word);
+    procedure HandleReportSlaveIDResponse(const ResponseBuffer: TModBusResponseBuffer;
+      out RegisterData: array of Word);
   protected
     procedure DoResponseError(const FunctionCode: Byte; const ErrorCode: Byte;
       const ResponseBuffer: TModBusResponseBuffer);
@@ -67,7 +79,8 @@ type
       const ResponseBuffer: TModBusResponseBuffer);
     procedure InitComponent; override;
     function SendCommand(const AModBusFunction: TModBusFunction; const ARegNumber: Word;
-      const ABlockLength: Word; var Data: array of Word): Boolean;
+      const ABlockLength: Word; var Data: array of Word;
+      const AResponseHandler: TModbusClientHandleResponse = nil): Boolean;
   public
     property LastTransactionID: Word read FLastTransactionID;
   { public methods }
@@ -154,10 +167,11 @@ end;
 
 
 function TIdModBusClient.SendCommand(const AModBusFunction: TModBusFunction;
-  const ARegNumber: Word; const ABlockLength: Word; var Data: array of Word): Boolean;
+  const ARegNumber: Word; const ABlockLength: Word; var Data: array of Word;
+  const AResponseHandler: TModbusClientHandleResponse = nil): Boolean;
 var
   SendBuffer: TModBusRequestBuffer;
-  ReceiveBuffer: TModBusResponseBuffer;
+  ResponseBuffer: TModBusResponseBuffer;
   BlockLength: Word;
   RegNumber: Word;
   dtTimeOut: TDateTime;
@@ -304,40 +318,19 @@ begin
   Result := True;
   iSize := IOHandler.InputBuffer.Size;
   IOHandler.ReadBytes(RecBuffer, iSize);
-  Move(RecBuffer[0], ReceiveBuffer, iSize);
+  Move(RecBuffer[0], ResponseBuffer, iSize);
 { Check if the result has the same function code as the request }
-  if (AModBusFunction = ReceiveBuffer.FunctionCode) then
+  if (AModBusFunction = ResponseBuffer.FunctionCode) then
   begin
-    case AModBusFunction of
-      mbfReadCoils,
-      mbfReadInputBits:
-        begin
-          BlockLength := ReceiveBuffer.MBPData[0] * 8;
-          if (BlockLength > 2000) then
-            BlockLength := 2000;
-          GetCoilsFromBuffer(@ReceiveBuffer.MBPData[1], BlockLength, Data);
-        end;
-      mbfReportSlaveID:
-        begin
-          BlockLength := Swap16(ReceiveBuffer.Header.RecLength) - 2;
-          GetReportFromBuffer(@ReceiveBuffer.MBPData[0], BlockLength, Data);
-        end;
-      mbfReadHoldingRegs,
-      mbfReadInputRegs:
-        begin
-          BlockLength := (ReceiveBuffer.MBPData[0] shr 1);
-          if (BlockLength > 125) then
-            BlockLength := 125;
-          GetRegistersFromBuffer(@ReceiveBuffer.MBPData[1], BlockLength, Data);
-        end;
-    end;
+    if Assigned(AResponseHandler) then
+      AResponseHandler(ResponseBuffer, Data);
   end
   else
   begin
-    if ((AModBusFunction or $80) = ReceiveBuffer.FunctionCode) then
-      DoResponseError(AModBusFunction, ReceiveBuffer.MBPData[0], ReceiveBuffer)
+    if ((AModBusFunction or $80) = ResponseBuffer.FunctionCode) then
+      DoResponseError(AModBusFunction, ResponseBuffer.MBPData[0], ResponseBuffer)
     else
-      DoResponseMismatch(AModBusFunction, ReceiveBuffer.FunctionCode, ReceiveBuffer);
+      DoResponseMismatch(AModBusFunction, ResponseBuffer.FunctionCode, ResponseBuffer);
     Result := False;
   end;
 end;
@@ -356,10 +349,22 @@ end;
 function TIdModBusClient.ReadHoldingRegister(const RegNo: Word;
   out Value: Word): Boolean;
 var
-  Data: array[0..0] of Word;  
+  Data: array[0..0] of Word;
 begin
   Result := ReadHoldingRegisters(RegNo, 1, Data);
   Value := Data[0];
+end;
+
+
+procedure TIdModBusClient.HandleReadHoldingRegistersResponse(const ResponseBuffer: TModBusResponseBuffer;
+  out RegisterData: array of Word);
+var
+  BlockLength: Word;
+begin
+  BlockLength := (ResponseBuffer.MBPData[0] shr 1);
+  if (BlockLength > 125) then
+    BlockLength := 125;
+  GetRegistersFromBuffer(@ResponseBuffer.MBPData[1], BlockLength, RegisterData);
 end;
 
 
@@ -380,13 +385,25 @@ begin
   try
     SetLength(Data, Blocks);
     FillChar(Data[0], Length(Data), 0);
-    Result := SendCommand(mbfReadHoldingRegs, RegNo, Blocks, Data);
+    Result := SendCommand(mbfReadHoldingRegs, RegNo, Blocks, Data, HandleReadHoldingRegistersResponse);
     for i := Low(Data) to High(Data) do
       RegisterData[i] := Data[i];
   finally
     if bNewConnection then
       DisConnect;
   end;
+end;
+
+
+procedure TIdModBusClient.HandleReadInputBitsResponse(const ResponseBuffer: TModBusResponseBuffer;
+  out RegisterData: array of Word);
+var
+  BlockLength: Word;
+begin
+  BlockLength := ResponseBuffer.MBPData[0] * 8;
+  if (BlockLength > 2000) then
+    BlockLength := 2000;
+  GetCoilsFromBuffer(@ResponseBuffer.MBPData[1], BlockLength, RegisterData);
 end;
 
 
@@ -407,7 +424,7 @@ begin
   SetLength(Data, Blocks);
   FillChar(Data[0], Length(Data), 0);
   try
-    Result := SendCommand(mbfReadInputBits, RegNo, Blocks, Data);
+    Result := SendCommand(mbfReadInputBits, RegNo, Blocks, Data, HandleReadInputBitsResponse);
     for i := 0 to (Blocks - 1) do
       RegisterData[i] := (Data[i] = 1);
   finally
@@ -426,6 +443,18 @@ begin
 end;
 
 
+procedure TIdModBusClient.HandleReadInputRegistersResponse(const ResponseBuffer: TModBusResponseBuffer;
+  out RegisterData: array of Word);
+var
+  BlockLength: Word;
+begin
+  BlockLength := (ResponseBuffer.MBPData[0] shr 1);
+  if (BlockLength > 125) then
+    BlockLength := 125;
+  GetRegistersFromBuffer(@ResponseBuffer.MBPData[1], BlockLength, RegisterData);
+end;
+
+
 function TIdModBusClient.ReadInputRegisters(const RegNo, Blocks: Word;
   var RegisterData: array of Word): Boolean;
 var
@@ -440,7 +469,7 @@ begin
 
   FillChar(RegisterData[0], Length(RegisterData), 0);
   try
-    Result := SendCommand(mbfReadInputRegs, RegNo, Blocks, RegisterData);
+    Result := SendCommand(mbfReadInputRegs, RegNo, Blocks, RegisterData, HandleReadInputRegistersResponse);
   finally
     if bNewConnection then
       DisConnect;
@@ -454,6 +483,18 @@ var
 begin
   Result := ReadCoils(RegNo, 1, Data);
   Value := Data[0];
+end;
+
+
+procedure TIdModBusClient.HandleReadCoilsResponse(const ResponseBuffer: TModBusResponseBuffer;
+  out RegisterData: array of Word);
+var
+  BlockLength: Word;
+begin
+  BlockLength := ResponseBuffer.MBPData[0] * 8;
+  if (BlockLength > 2000) then
+    BlockLength := 2000;
+  GetCoilsFromBuffer(@ResponseBuffer.MBPData[1], BlockLength, RegisterData);
 end;
 
 
@@ -473,7 +514,7 @@ begin
   SetLength(Data, Blocks);
   FillChar(Data[0], Length(Data), 0);
   try
-    Result := SendCommand(mbfReadCoils, RegNo, Blocks, Data);
+    Result := SendCommand(mbfReadCoils, RegNo, Blocks, Data, HandleReadCoilsResponse);
     for i := 0 to (Blocks - 1) do
       RegisterData[i] := (Data[i] = 1);
   finally
@@ -545,6 +586,16 @@ begin
 end;
 
 
+procedure TIdModbusClient.HandleReportSlaveIDResponse(const ResponseBuffer: TModBusResponseBuffer;
+  out RegisterData: array of Word);
+var
+  BlockLength: Word;
+begin
+  BlockLength := Swap16(ResponseBuffer.Header.RecLength) - 2;
+  GetReportFromBuffer(@ResponseBuffer.MBPData[0], BlockLength, RegisterData);
+end;
+
+
 function TIdModbusClient.ReportSlaveID(const Blocks: Word; out RegisterData: array of Word): Boolean;
 var
   bNewConnection: Boolean;
@@ -557,7 +608,7 @@ begin
   end;
   FillChar(RegisterData[0], Length(RegisterData), 0);
   try
-    Result := SendCommand(mbfReportSlaveID, 1, 2, RegisterData);
+    Result := SendCommand(mbfReportSlaveID, 1, 2, RegisterData, HandleReportSlaveIDResponse);
   finally
     if bNewConnection then
       DisConnect;

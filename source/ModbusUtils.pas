@@ -209,6 +209,7 @@ begin
   end;
 end;
 
+
 procedure GetReportFromBuffer(const Buffer: PByte; const Count: Word; var Data: array of Word);
 var
   WordPtr: PByte;
@@ -224,6 +225,7 @@ begin
     Inc(WordPtr);
   end;
 end;
+
 
 procedure PutRegistersIntoBuffer(const Buffer: PWord; const Count: Word; const Data: array of Word);
 var
