@@ -102,7 +102,7 @@ var
   i: Integer;
   bTemp: Byte;
 begin
-  Result := 0;
+  Result := $FFFF;
   for i := Low(Buffer) to High(Buffer) do
   begin
     bTemp := Buffer[i] xor Result;

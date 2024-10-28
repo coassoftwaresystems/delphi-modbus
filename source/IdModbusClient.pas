@@ -53,6 +53,7 @@ type
   private
     FAutoConnect: Boolean;
     FBaseRegister: Word;
+    FIncludeCrc: Boolean;
     FOnResponseError: TModbusClientErrorEvent;
     FOnResponseMismatch: TModBusClientResponseMismatchEvent;
     FLastTransactionID: Word;
@@ -111,7 +112,8 @@ type
     function WriteString(const RegNo: Word; const Text: String): Boolean;
   published
     property AutoConnect: Boolean read FAutoConnect write FAutoConnect default True;
-    property BaseRegister: Word read FBaseRegister write FBaseRegister default 1; 
+    property BaseRegister: Word read FBaseRegister write FBaseRegister default 1;
+    property IncludeCrc: Boolean read FIncludeCrc write FIncludeCrc default False;
     property ReadTimeout: Integer read FReadTimeout write FReadTimeout default 0;
     property Port default MB_PORT;
     property TimeOut: Cardinal read FTimeOut write FTimeout default 15000;
@@ -143,6 +145,7 @@ begin
   inherited;
   FAutoConnect := True;
   FBaseRegister := 1;
+  FIncludeCrc := False;
   FLastTransactionID := 0;
   FReadTimeout := 0;
   FUnitID := MB_IGNORE_UNITID;
@@ -281,6 +284,7 @@ function TIdModBusClient.SendCommandToSocket(const ARequestBuffer: TModBusReques
   const AResponseHandler: TModbusClientHandleResponse; var Data: array of Word): Boolean;
 var
   Buffer: TIdBytes;
+  Crc: Word;
   dtTimeOut: TDateTime;
   iSize: Integer;
   RecBuffer: TIdBytes;
@@ -291,6 +295,14 @@ begin
     IOHandler.InputBuffer.Clear;
 { Writeout the data to the connection }
   Buffer := RawToBytes(ARequestBuffer, Swap16(ARequestBuffer.Header.RecLength) + 6);
+  if FIncludeCrc then
+  begin
+    Crc := CalculateCRC16(Buffer);
+    SetLength(Buffer, IndyLength(Buffer) + 2);
+    Buffer[High(Buffer)] := Hi(Crc);
+    Buffer[High(Buffer) - 1] := Lo(Crc);
+  end;
+
   IOHandler.WriteDirect(Buffer);
 
 {*** Wait for data from the PLC ***}
