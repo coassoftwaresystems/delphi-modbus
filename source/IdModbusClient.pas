@@ -286,6 +286,9 @@ var
   RecBuffer: TIdBytes;
   ResponseBuffer: TModBusResponseBuffer;
 begin
+{ Clear input buffer to prevent reading possible data left from previous request }
+  if Connected then
+    IOHandler.InputBuffer.Clear;
 { Writeout the data to the connection }
   Buffer := RawToBytes(ARequestBuffer, Swap16(ARequestBuffer.Header.RecLength) + 6);
   IOHandler.WriteDirect(Buffer);
