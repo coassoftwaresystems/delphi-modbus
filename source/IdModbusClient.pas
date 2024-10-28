@@ -73,6 +73,7 @@ type
     procedure HandleReportSlaveIDResponse(const ResponseBuffer: TModBusResponseBuffer;
       out RegisterData: array of Word);
   protected
+    function BuildRequestBuffer(const AModBusFunction: TModBusFunction; const ARegNumber: Word): TModBusRequestBuffer;
     procedure DoResponseError(const FunctionCode: Byte; const ErrorCode: Byte;
       const ResponseBuffer: TModBusResponseBuffer);
     procedure DoResponseMismatch(const RequestFunctionCode: Byte; const ResponseFunctionCode: Byte;
@@ -81,6 +82,8 @@ type
     function SendCommand(const AModBusFunction: TModBusFunction; const ARegNumber: Word;
       const ABlockLength: Word; var Data: array of Word;
       const AResponseHandler: TModbusClientHandleResponse = nil): Boolean;
+    function SendCommandToSocket(const ARequestBuffer: TModBusRequestBuffer;
+      const AResponseHandler: TModbusClientHandleResponse; var Data: array of Word): Boolean;
   public
     property LastTransactionID: Word read FLastTransactionID;
   { public methods }
@@ -150,6 +153,18 @@ begin
 end;
 
 
+function TIdModBusClient.BuildRequestBuffer(const AModBusFunction: TModBusFunction;
+  const ARegNumber: Word): TModBusRequestBuffer;
+begin
+  Result.Header.TransactionID := GetNewTransactionID;
+  Result.Header.ProtocolID := MB_PROTOCOL;
+  Result.FunctionCode := Byte(AModBusFunction);
+  Result.Header.UnitID := FUnitID;
+  Result.MBPData[0] := Hi(ARegNumber);
+  Result.MBPData[1] := Lo(ARegNumber);
+end;
+
+
 procedure TIdModBusClient.DoResponseError(const FunctionCode: Byte; const ErrorCode: Byte;
   const ResponseBuffer: TModBusResponseBuffer);
 begin
@@ -170,33 +185,20 @@ function TIdModBusClient.SendCommand(const AModBusFunction: TModBusFunction;
   const ARegNumber: Word; const ABlockLength: Word; var Data: array of Word;
   const AResponseHandler: TModbusClientHandleResponse = nil): Boolean;
 var
-  SendBuffer: TModBusRequestBuffer;
-  ResponseBuffer: TModBusResponseBuffer;
+  RequestBuffer: TModBusRequestBuffer;
   BlockLength: Word;
-  RegNumber: Word;
-  dtTimeOut: TDateTime;
-  Buffer: TIdBytes;
-  RecBuffer: TIdBytes;
-  iSize: Integer;
 begin
   CheckForGracefulDisconnect(True);
-  SendBuffer.Header.TransactionID := GetNewTransactionID;
-  SendBuffer.Header.ProtocolID := MB_PROTOCOL;
-{ Initialise data related variables }
-  RegNumber := ARegNumber - FBaseRegister;
+  RequestBuffer := BuildRequestBuffer(AModBusFunction, ARegNumber - FBaseRegister);
 { Perform function code specific operations }
   case AModBusFunction of
     mbfMaskedWriteReg:
       begin
-        SendBuffer.FunctionCode := Byte(AModBusFunction); { Write appropriate function code }
-        SendBuffer.Header.UnitID := FUnitID;
-        SendBuffer.MBPData[0] := Hi(RegNumber);
-        SendBuffer.MBPData[1] := Lo(RegNumber);
-        SendBuffer.MBPData[2] := Hi(Data[0]);
-        SendBuffer.MBPData[3] := Lo(Data[0]);
-        SendBuffer.MBPData[4] := Hi(Data[1]);
-        SendBuffer.MBPData[5] := Lo(Data[1]);
-        SendBuffer.Header.RecLength := Swap16(8); { This includes UnitID/FuntionCode }
+        RequestBuffer.MBPData[2] := Hi(Data[0]);
+        RequestBuffer.MBPData[3] := Lo(Data[0]);
+        RequestBuffer.MBPData[4] := Hi(Data[1]);
+        RequestBuffer.MBPData[5] := Lo(Data[1]);
+        RequestBuffer.Header.RecLength := Swap16(8); { This includes UnitID/FuntionCode }
       end;
     mbfReadCoils,
     mbfReadInputBits:
@@ -206,13 +208,9 @@ begin
         if (BlockLength > 2000) then
           BlockLength := 2000;
       { Initialise the data part }
-        SendBuffer.FunctionCode := Byte(AModBusFunction); { Write appropriate function code }
-        SendBuffer.Header.UnitID := FUnitID;
-        SendBuffer.MBPData[0] := Hi(RegNumber);
-        SendBuffer.MBPData[1] := Lo(RegNumber);
-        SendBuffer.MBPData[2] := Hi(BlockLength);
-        SendBuffer.MBPData[3] := Lo(BlockLength);
-        SendBuffer.Header.RecLength := Swap16(6); { This includes UnitID/FuntionCode }
+        RequestBuffer.MBPData[2] := Hi(BlockLength);
+        RequestBuffer.MBPData[3] := Lo(BlockLength);
+        RequestBuffer.Header.RecLength := Swap16(6); { This includes UnitID/FuntionCode }
       end;
     mbfReadHoldingRegs,
     mbfReadInputRegs:
@@ -221,45 +219,31 @@ begin
         if (BlockLength > 125) then
           BlockLength := 125; { Don't exceed max length }
       { Initialise the data part }
-        SendBuffer.FunctionCode := Byte(AModBusFunction); { Write appropriate function code }
-        SendBuffer.Header.UnitID := FUnitID;
-        SendBuffer.MBPData[0] := Hi(RegNumber);
-        SendBuffer.MBPData[1] := Lo(RegNumber);
-        SendBuffer.MBPData[2] := Hi(BlockLength);
-        SendBuffer.MBPData[3] := Lo(BlockLength);
-        SendBuffer.Header.RecLength := Swap16(6); { This includes UnitID/FuntionCode }
+        RequestBuffer.MBPData[2] := Hi(BlockLength);
+        RequestBuffer.MBPData[3] := Lo(BlockLength);
+        RequestBuffer.Header.RecLength := Swap16(6); { This includes UnitID/FuntionCode }
       end;
     mbfReportSlaveID:
       begin
       { Initialise the data part }
-        SendBuffer.FunctionCode := Byte(AModBusFunction); { Write appropriate function code }
-        SendBuffer.Header.UnitID := FUnitID;
-        SendBuffer.Header.RecLength := Swap16(2); { This includes UnitID/FuntionCode }
+        RequestBuffer.Header.RecLength := Swap16(2); { This includes UnitID/FuntionCode }
       end;
     mbfWriteOneCoil:
       begin
       { Initialise the data part }
-        SendBuffer.FunctionCode := Byte(AModBusFunction); { Write appropriate function code }
-        SendBuffer.Header.UnitID := FUnitID;
-        SendBuffer.MBPData[0] := Hi(RegNumber);
-        SendBuffer.MBPData[1] := Lo(RegNumber);
         if (Data[0] <> 0) then
-          SendBuffer.MBPData[2] := 255
+          RequestBuffer.MBPData[2] := 255
         else
-          SendBuffer.MBPData[2] := 0;
-        SendBuffer.MBPData[3] := 0;
-        SendBuffer.Header.RecLength := Swap16(6); { This includes UnitID/FuntionCode }
+          RequestBuffer.MBPData[2] := 0;
+        RequestBuffer.MBPData[3] := 0;
+        RequestBuffer.Header.RecLength := Swap16(6); { This includes UnitID/FuntionCode }
       end;
     mbfWriteOneReg:
       begin
       { Initialise the data part }
-        SendBuffer.FunctionCode := Byte(AModBusFunction); { Write appropriate function code }
-        SendBuffer.Header.UnitID := FUnitID;
-        SendBuffer.MBPData[0] := Hi(RegNumber);
-        SendBuffer.MBPData[1] := Lo(RegNumber);
-        SendBuffer.MBPData[2] := Hi(Data[0]);
-        SendBuffer.MBPData[3] := Lo(Data[0]);
-        SendBuffer.Header.RecLength := Swap16(6); { This includes UnitID/FuntionCode }
+        RequestBuffer.MBPData[2] := Hi(Data[0]);
+        RequestBuffer.MBPData[3] := Lo(Data[0]);
+        RequestBuffer.Header.RecLength := Swap16(6); { This includes UnitID/FuntionCode }
       end;
     mbfWriteCoils:
       begin
@@ -268,15 +252,11 @@ begin
         if (BlockLength > 1968) then
           BlockLength := 1968;
       { Initialise the data part }
-        SendBuffer.FunctionCode := Byte(AModBusFunction); { Write appropriate function code }
-        SendBuffer.Header.UnitID := FUnitID;
-        SendBuffer.MBPData[0] := Hi(RegNumber);
-        SendBuffer.MBPData[1] := Lo(RegNumber);
-        SendBuffer.MBPData[2] := Hi(BlockLength);
-        SendBuffer.MBPData[3] := Lo(BlockLength);
-        SendBuffer.MBPData[4] := Byte((BlockLength + 7) div 8);
-        PutCoilsIntoBuffer(@SendBuffer.MBPData[5], BlockLength, Data);
-        SendBuffer.Header.RecLength := Swap16(7 + SendBuffer.MBPData[4]);
+        RequestBuffer.MBPData[2] := Hi(BlockLength);
+        RequestBuffer.MBPData[3] := Lo(BlockLength);
+        RequestBuffer.MBPData[4] := Byte((BlockLength + 7) div 8);
+        PutCoilsIntoBuffer(@RequestBuffer.MBPData[5], BlockLength, Data);
+        RequestBuffer.Header.RecLength := Swap16(7 + RequestBuffer.MBPData[4]);
       end;
     mbfWriteRegs:
       begin
@@ -285,19 +265,29 @@ begin
         if (BlockLength > 120) then
           BlockLength := 120;
       { Initialise the data part }
-        SendBuffer.FunctionCode := Byte(AModBusFunction); { Write appropriate function code }
-        SendBuffer.Header.UnitID := FUnitID;
-        SendBuffer.MBPData[0] := Hi(RegNumber);
-        SendBuffer.MBPData[1] := Lo(RegNumber);
-        SendBuffer.MBPData[2] := Hi(BlockLength);
-        SendBuffer.MBPData[3] := Lo(BlockLength);
-        SendBuffer.MbpData[4] := Byte(BlockLength shl 1);
-        PutRegistersIntoBuffer(@SendBuffer.MBPData[5], BlockLength, Data);
-        SendBuffer.Header.RecLength := Swap16(7 + SendBuffer.MbpData[4]);
+        RequestBuffer.MBPData[2] := Hi(BlockLength);
+        RequestBuffer.MBPData[3] := Lo(BlockLength);
+        RequestBuffer.MbpData[4] := Byte(BlockLength shl 1);
+        PutRegistersIntoBuffer(@RequestBuffer.MBPData[5], BlockLength, Data);
+        RequestBuffer.Header.RecLength := Swap16(7 + RequestBuffer.MbpData[4]);
       end;
   end;
+
+  Result := SendCommandToSocket(RequestBuffer, AResponseHandler, Data);
+end;
+
+
+function TIdModBusClient.SendCommandToSocket(const ARequestBuffer: TModBusRequestBuffer;
+  const AResponseHandler: TModbusClientHandleResponse; var Data: array of Word): Boolean;
+var
+  Buffer: TIdBytes;
+  dtTimeOut: TDateTime;
+  iSize: Integer;
+  RecBuffer: TIdBytes;
+  ResponseBuffer: TModBusResponseBuffer;
+begin
 { Writeout the data to the connection }
-  Buffer := RawToBytes(SendBuffer, Swap16(SendBuffer.Header.RecLength) + 6);
+  Buffer := RawToBytes(ARequestBuffer, Swap16(ARequestBuffer.Header.RecLength) + 6);
   IOHandler.WriteDirect(Buffer);
 
 {*** Wait for data from the PLC ***}
@@ -320,17 +310,17 @@ begin
   IOHandler.ReadBytes(RecBuffer, iSize);
   Move(RecBuffer[0], ResponseBuffer, iSize);
 { Check if the result has the same function code as the request }
-  if (AModBusFunction = ResponseBuffer.FunctionCode) then
+  if (ARequestBuffer.FunctionCode = ResponseBuffer.FunctionCode) then
   begin
     if Assigned(AResponseHandler) then
       AResponseHandler(ResponseBuffer, Data);
   end
   else
   begin
-    if ((AModBusFunction or $80) = ResponseBuffer.FunctionCode) then
-      DoResponseError(AModBusFunction, ResponseBuffer.MBPData[0], ResponseBuffer)
+    if ((ARequestBuffer.FunctionCode or $80) = ResponseBuffer.FunctionCode) then
+      DoResponseError(ARequestBuffer.FunctionCode, ResponseBuffer.MBPData[0], ResponseBuffer)
     else
-      DoResponseMismatch(AModBusFunction, ResponseBuffer.FunctionCode, ResponseBuffer);
+      DoResponseMismatch(ARequestBuffer.FunctionCode, ResponseBuffer.FunctionCode, ResponseBuffer);
     Result := False;
   end;
 end;
