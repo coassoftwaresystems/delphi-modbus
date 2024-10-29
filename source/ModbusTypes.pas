@@ -1,6 +1,6 @@
 {===============================================================================
 
-Copyright (c) 2010 P.L. Polak
+Copyright (c) 2024 P.L. Polak
 
 The MIT License (MIT)
 
