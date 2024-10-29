@@ -32,15 +32,8 @@ unit IdModBusServer;
 interface
 
 uses
-  Classes
- ,SysUtils
- ,IdContext
- ,IdCustomTCPServer
- ,IdGlobal
- ,ModBusConsts
- ,ModbusTypes
- ,ModbusUtils
- ,SyncObjs;
+  Classes, SysUtils, IdContext, IdCustomTCPServer, IdGlobal, ModBusConsts,
+  ModbusTypes, ModbusUtils, SyncObjs;
 
 type
   TModRegisterData = array[0..MaxBlockLength] of Word;

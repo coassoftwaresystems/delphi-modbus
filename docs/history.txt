@@ -3,6 +3,7 @@ Version 2.0.0
 - Drop support for old Delphi versions (before 2007), and drop support for Indy 9.
 - New Modbus client functions:
   - 22 (0x16) Mask Write Register
+- Add new property 'IncludeCrc' to TIdModbusClient, which appends CRC value at the end of the request.
 
 Version 1.7.3
 =================================
