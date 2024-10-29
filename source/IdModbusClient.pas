@@ -40,6 +40,10 @@ type
     out RegisterData: array of Word) of object;
   TModBusClientResponseMismatchEvent = procedure(const RequestFunctionCode: Byte;
     const ResponseFunctionCode: Byte; const ResponseBuffer: TModBusResponseBuffer) of object;
+  TModbusClientSendBufferEvent = procedure(const ARequestBuffer: TModBusRequestBuffer;
+    const Buffer: TIdBytes) of object;
+  TModbusClientReceiveBufferEvent = procedure(const ARequestBuffer: TModBusRequestBuffer;
+    const AResponseBuffer: TModBusResponseBuffer; const Buffer: TIdBytes) of object;
 
 type
 {$I ModBusPlatforms.inc}
@@ -48,6 +52,8 @@ type
     FAutoConnect: Boolean;
     FBaseRegister: Word;
     FIncludeCrc: Boolean;
+    FOnSendBuffer: TModbusClientSendBufferEvent;
+    FOnReceiveBuffer: TModbusClientReceiveBufferEvent;
     FOnResponseError: TModbusClientErrorEvent;
     FOnResponseMismatch: TModBusClientResponseMismatchEvent;
     FLastTransactionID: Word;
@@ -68,6 +74,9 @@ type
   protected
     function BuildRequestBuffer(const AModBusFunction: TModBusFunction;
       const ARegNumber: Word): TModBusRequestBuffer; virtual;
+    procedure DoReceiveBuffer(const ARequestBuffer: TModBusRequestBuffer;
+      const AResponseBuffer: TModBusResponseBuffer; const Buffer: TIdBytes); virtual;
+    procedure DoSendBuffer(const ARequestBuffer: TModBusRequestBuffer; const Buffer: TIdBytes); virtual;
     procedure DoResponseError(const FunctionCode: Byte; const ErrorCode: Byte;
       const ResponseBuffer: TModBusResponseBuffer); virtual;
     procedure DoResponseMismatch(const RequestFunctionCode: Byte; const ResponseFunctionCode: Byte;
@@ -115,6 +124,8 @@ type
     property UnitID: Byte read FUnitID write FUnitID default MB_IGNORE_UNITID;
     property Version: String read GetVersion write SetVersion stored False;
   { events }
+    property OnSendBuffer: TModbusClientSendBufferEvent read FOnSendBuffer write FOnSendBuffer;
+    property OnReceiveBuffer: TModbusClientReceiveBufferEvent read FOnReceiveBuffer write FOnReceiveBuffer;
     property OnResponseError: TModbusClientErrorEvent read FOnResponseError write FOnResponseError;
     property OnResponseMismatch: TModBusClientResponseMismatchEvent read FOnResponseMismatch write FOnResponseMismatch;
   end;
@@ -146,6 +157,8 @@ begin
   FUnitID := MB_IGNORE_UNITID;
   FTimeOut := 15000;
   Port := MB_PORT;
+  FOnSendBuffer := nil;
+  FOnReceiveBuffer := nil;
   FOnResponseError := nil;
   FOnResponseMismatch := nil;
 end;
@@ -160,6 +173,21 @@ begin
   Result.Header.UnitID := FUnitID;
   Result.MBPData[0] := Hi(ARegNumber);
   Result.MBPData[1] := Lo(ARegNumber);
+end;
+
+
+procedure TIdModBusClient.DoReceiveBuffer(const ARequestBuffer: TModBusRequestBuffer;
+  const AResponseBuffer: TModBusResponseBuffer; const Buffer: TIdBytes);
+begin
+  if Assigned(FOnReceiveBuffer) then
+    FOnReceiveBuffer(ARequestBuffer, AResponseBuffer, Buffer);
+end;
+
+
+procedure TIdModBusClient.DoSendBuffer(const ARequestBuffer: TModBusRequestBuffer; const Buffer: TIdBytes);
+begin
+  if Assigned(FOnSendBuffer) then
+    FOnSendBuffer(ARequestBuffer, Buffer);
 end;
 
 
@@ -212,7 +240,7 @@ var
   Crc: Word;
   dtTimeOut: TDateTime;
   iSize: Integer;
-  RecBuffer: TIdBytes;
+  ReceiveBuffer: TIdBytes;
   ResponseBuffer: TModBusResponseBuffer;
 begin
   CheckForGracefulDisconnect(True);
@@ -230,6 +258,7 @@ begin
   end;
 
   IOHandler.WriteDirect(Buffer);
+  DoSendBuffer(ARequestBuffer, Buffer);
 
 {*** Wait for data from the PLC ***}
   if (FTimeOut > 0) then
@@ -248,8 +277,11 @@ begin
 
   Result := True;
   iSize := IOHandler.InputBuffer.Size;
-  IOHandler.ReadBytes(RecBuffer, iSize);
-  Move(RecBuffer[0], ResponseBuffer, iSize);
+  IOHandler.ReadBytes(ReceiveBuffer, iSize);
+  Move(ReceiveBuffer[0], ResponseBuffer, iSize);
+
+  DoReceiveBuffer(ARequestBuffer, ResponseBuffer, ReceiveBuffer);
+
 { Check if the result has the same function code as the request }
   if (ARequestBuffer.FunctionCode = ResponseBuffer.FunctionCode) then
   begin

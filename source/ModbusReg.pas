@@ -72,6 +72,8 @@ begin
   RegisterPropertyInCategory(sModbus, TIdModbusClient, 'UnitID');
   RegisterPropertyInCategory(sModbus, TIdModbusClient, 'Version');
 { Register the property categories for the client events }
+  RegisterPropertyInCategory(sModbus, TIdModbusClient, 'OnSendBuffer');
+  RegisterPropertyInCategory(sModbus, TIdModbusClient, 'OnReceiveBuffer');
   RegisterPropertyInCategory(sModbus, TIdModbusClient, 'OnResponseError');
   RegisterPropertyInCategory(sModbus, TIdModbusClient, 'OnResponseMismatch');
 
