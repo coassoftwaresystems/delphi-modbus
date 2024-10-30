@@ -40,10 +40,10 @@ type
     out RegisterData: array of Word) of object;
   TModBusClientResponseMismatchEvent = procedure(const RequestFunctionCode: Byte;
     const ResponseFunctionCode: Byte; const ResponseBuffer: TModBusResponseBuffer) of object;
-  TModbusClientSendBufferEvent = procedure(const ARequestBuffer: TModBusRequestBuffer;
-    const Buffer: TIdBytes) of object;
-  TModbusClientReceiveBufferEvent = procedure(const ARequestBuffer: TModBusRequestBuffer;
-    const AResponseBuffer: TModBusResponseBuffer; const Buffer: TIdBytes) of object;
+  TModbusClientSendBufferEvent = procedure(const RequestBuffer: TModBusRequestBuffer;
+    const RawBuffer: TIdBytes) of object;
+  TModbusClientReceiveBufferEvent = procedure(const RequestBuffer: TModBusRequestBuffer;
+    const ResponseBuffer: TModBusResponseBuffer; const RawBuffer: TIdBytes) of object;
 
 type
 {$I ModBusPlatforms.inc}
