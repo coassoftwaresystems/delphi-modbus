@@ -252,7 +252,11 @@ begin
   if FIncludeCrc then
   begin
     Crc := CalculateCRC16(Buffer);
+  {$IFDEF DMB_DELPHIXE3}
     SetLength(Buffer, IndyLength(Buffer) + 2);
+  {$ELSE}
+    SetLength(Buffer, Length(Buffer) + 2);
+  {$ENDIF}
     Buffer[High(Buffer)] := Hi(Crc);
     Buffer[High(Buffer) - 1] := Lo(Crc);
   end;

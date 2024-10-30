@@ -5,7 +5,7 @@
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
     <DCC_DCCCompiler>DCC32</DCC_DCCCompiler>
-    <DCC_DependencyCheckOutputName>C:\Documents and Settings\All Users\Documents\RAD Studio\5.0\Bpl\dclDelphiModbus2007.bpl</DCC_DependencyCheckOutputName>
+    <DCC_DependencyCheckOutputName>C:\Users\Public\Documents\RAD Studio\5.0\Bpl\dclDelphiModbus2007.bpl</DCC_DependencyCheckOutputName>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <Version>7.0</Version>
@@ -28,6 +28,14 @@
     <DelphiCompile Include="dclDelphiModbus2007.dpk">
       <MainSource>MainSource</MainSource>
     </DelphiCompile>
+    <DCCReference Include="$(SystemRoot)\system32\DelphiModbus2007.dcp" />
+    <DCCReference Include="$(SystemRoot)\system32\designide.dcp" />
+    <DCCReference Include="$(SystemRoot)\system32\rtl.dcp" />
+    <DCCReference Include="$(SystemRoot)\system32\vcl.dcp" />
+    <DCCReference Include="$(SystemRoot)\system32\vclactnband.dcp" />
+    <DCCReference Include="$(SystemRoot)\system32\vcljpg.dcp" />
+    <DCCReference Include="$(SystemRoot)\system32\vclx.dcp" />
+    <DCCReference Include="$(SystemRoot)\system32\xmlrtl.dcp" />
     <DCCReference Include="..\source\AboutComponentEditor.pas" />
     <DCCReference Include="..\source\frm_About.pas">
       <Form>frmAbout</Form>
@@ -36,13 +44,5 @@
     <DCCReference Include="..\source\ModbusReg.dcr" />
     <DCCReference Include="..\source\ModbusReg.pas" />
     <DCCReference Include="..\source\ModbusSplash.pas" />
-    <DCCReference Include="DelphiModbus2007.dcp" />
-    <DCCReference Include="designide.dcp" />
-    <DCCReference Include="rtl.dcp" />
-    <DCCReference Include="vcl.dcp" />
-    <DCCReference Include="vclactnband.dcp" />
-    <DCCReference Include="vcljpg.dcp" />
-    <DCCReference Include="vclx.dcp" />
-    <DCCReference Include="xmlrtl.dcp" />
   </ItemGroup>
 </Project>
