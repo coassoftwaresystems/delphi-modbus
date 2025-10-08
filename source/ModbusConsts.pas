@@ -71,6 +71,7 @@ const
 
 const
   DMB_VERSION = '2.0.0-pre'; {Do not Localize}
+  DMB_LICENSE = 'MIT License'; {Do not Localize}
   
 const
   DefaultLogTimeFormat = 'yyyy-mm-dd hh:nn:ss.zzz';  {Do not Localize}

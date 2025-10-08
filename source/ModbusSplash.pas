@@ -61,7 +61,7 @@ begin
         ,'Free Delphi components for ModbusTCP communication version ' + DMB_VERSION
         ,AImage
         ,False
-        ,'Open source'
+        ,DMB_LICENSE
         ,'Delphi Modbus');
     end;
   end;
@@ -74,7 +74,7 @@ begin
     'Delphi ModbusTCP components ' + DMB_VERSION
    ,AImage
    ,False
-   ,'Open source'
+   ,DMB_LICENSE
    ,'');
 end;
 
