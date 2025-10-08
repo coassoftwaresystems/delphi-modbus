@@ -28,7 +28,7 @@ interface
 uses
   SysUtils, Types, Classes, Variants, FMX.Types, FMX.Controls, FMX.Forms,
   FMX.Dialogs, IdBaseComponent, IdComponent, IdTCPConnection, IdTCPClient,
-  IdModBusClient, FMX.Edit, UITypes;
+  IdModBusClient, FMX.Edit, UITypes, FMX.StdCtrls, FMX.Controls.Presentation;
 
 type
   TfrmMain = class(TForm)
