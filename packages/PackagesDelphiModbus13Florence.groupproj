@@ -1,0 +1,48 @@
+﻿<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+    <PropertyGroup>
+        <ProjectGuid>{45F9476B-22CE-429A-9796-F37870CF3483}</ProjectGuid>
+    </PropertyGroup>
+    <ItemGroup>
+        <Projects Include="DelphiModbus13Florence.dproj">
+            <Dependencies/>
+        </Projects>
+        <Projects Include="dclDelphiModbus13Florence.dproj">
+            <Dependencies/>
+        </Projects>
+    </ItemGroup>
+    <ProjectExtensions>
+        <Borland.Personality>Default.Personality.12</Borland.Personality>
+        <Borland.ProjectType/>
+        <BorlandProject>
+            <Default.Personality/>
+        </BorlandProject>
+    </ProjectExtensions>
+    <Target Name="DelphiModbus13Florence">
+        <MSBuild Projects="DelphiModbus13Florence.dproj"/>
+    </Target>
+    <Target Name="DelphiModbus13Florence:Clean">
+        <MSBuild Projects="DelphiModbus13Florence.dproj" Targets="Clean"/>
+    </Target>
+    <Target Name="DelphiModbus13Florence:Make">
+        <MSBuild Projects="DelphiModbus13Florence.dproj" Targets="Make"/>
+    </Target>
+    <Target Name="dclDelphiModbus13Florence">
+        <MSBuild Projects="dclDelphiModbus13Florence.dproj"/>
+    </Target>
+    <Target Name="dclDelphiModbus13Florence:Clean">
+        <MSBuild Projects="dclDelphiModbus13Florence.dproj" Targets="Clean"/>
+    </Target>
+    <Target Name="dclDelphiModbus13Florence:Make">
+        <MSBuild Projects="dclDelphiModbus13Florence.dproj" Targets="Make"/>
+    </Target>
+    <Target Name="Build">
+        <CallTarget Targets="DelphiModbus13Florence;dclDelphiModbus13Florence"/>
+    </Target>
+    <Target Name="Clean">
+        <CallTarget Targets="DelphiModbus13Florence:Clean;dclDelphiModbus13Florence:Clean"/>
+    </Target>
+    <Target Name="Make">
+        <CallTarget Targets="DelphiModbus13Florence:Make;dclDelphiModbus13Florence:Make"/>
+    </Target>
+    <Import Project="$(BDS)\Bin\CodeGear.Group.Targets" Condition="Exists('$(BDS)\Bin\CodeGear.Group.Targets')"/>
+</Project>
