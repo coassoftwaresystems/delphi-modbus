@@ -1,5 +1,6 @@
 Version 2.0.0
 =================================
+- Added support for Delphi 13 Florence.
 - Drop support for old Delphi versions (before 2007), and drop support for Indy 9.
 - New Modbus client functions:
   - 22 (0x16) Mask Write Register

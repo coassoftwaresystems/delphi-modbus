@@ -7,28 +7,16 @@ supported.
 
 Supported Delphi versions
 =========================
-The components can be used in Delphi versions 5 and higher. The components 
+The components can be used in Delphi versions 2007 and higher. The components 
 are based on the Internet Direct (aka 'Indy') components, which ship with 
-Delphi versions 6 and up. Only native development is supported (no .NET 
-version is available).
-
-For Delphi 5 and 6, you should download the latest Indy version 9.0 from the
-Indy website at http://www.indyproject.org/. At the moment of this writing,
-9.0.14 is the latest stable release.
-
-Delphi Modbus has been tested with both Indy 9 and 10. For using with Delphi 5,
-6 and 7, the usage of Indy9 is the default. For using with Delphi 2005 and
-onwards Indy 10 will be used by default. You can overrule the default Indy
-version be defining the compile directive FORCE_INDY9 or FORCE_INDY10 in the
-package compiler options (To use Indy 10 on Delphi 7 you should first download
-the required Indy 10 sources from the Indy project website).
+Delphi.
 
 A Delphi 2005 note: the Indy 10 packages which ship with Delphi 2005 are very
 old, and DelphiModbus requires them to be replaced by a more recent version
 which is available for download from the Indy project website.
 
 Packages are provided and tested for all mentioned Delphi versions, although
-full testing occurs only on Delphi 7, 2007 and 10.2 Tokyo (which are my main
+full testing occurs only on 2007, XE3 and the latest version (which are my main
 Delphi versions for production use). I expect that the Delphi 2006 packages will
 work with Turbo Delphi 2006 (Pro) as well, although this has not been tested.
 
@@ -41,8 +29,7 @@ Installation in the Delphi IDE
 ==============================
 To install the components in Delphi, identify the packages for your Delphi
 version: the 'year' Delphi versions have packages ending in the year of the
-Delphi version (e.g. DelphiModbus2010.dpk is for Delphi 2010). The lower Delphi
-versions have the version number (e.g. DelphiModbus70.dpk is for Delphi 7.0).
+Delphi version (e.g. DelphiModbus2010.dpk is for Delphi 2010).
 
 To install open the runtime package and the designtime package in the IDE:
  - DelphiModbus<version>.dpk    : The runtime package source
@@ -57,6 +44,8 @@ The Delphi Modbus components have been successfully installed and tested on
 Lazarus 0.9.29 with FPC 2.5.1 on Win32. The package has a dependency on the
 Indy 10 package provided by the CodeTyphoon FPC distribution, which should be
 installed first (http://www.pilotlogic.com/).
+Lazarus support is a community effort, and is not including in standard testing.
+Please feel free to submit a pull request to improve it! 
 
 
 Support
