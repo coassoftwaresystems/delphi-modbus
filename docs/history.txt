@@ -1,7 +1,7 @@
 Version 2.0.0
 =================================
 - Added support for Delphi 13 Florence.
-- Add new Modbus client function:
+- Added new Modbus client function:
   - 22 (0x16) Mask Write Register.
 - Add new property 'IncludeCrc' to TIdModbusClient, which appends CRC value at the end of the request.
 - Add new events in TIdModbusClient to log data in Send- and Receive buffers.
@@ -9,18 +9,18 @@ Version 2.0.0
 - Fix: IdModbusClient - clear the input buffer before sending a new request.
 - Drop support for old Delphi versions (before 2007), and drop support for Indy 9.
 
-Version 1.7.3
-=================================
+Version 1.7.3 - October 23, 2024
+================================
 - Added support for Delphi 12 Athens.
-- New Modbus client function:
+- Added new Modbus client function:
   - 17 (0x11) Report Slave ID
 
-Version 1.7.2
-=================================
+Version 1.7.2 - October 26, 2021
+================================
 - Added support for Delphi 11 Alexandria.
 
-Version 1.7.1
-=================================
+Version 1.7.1 - June 23, 2020
+=============================
 - Added support for Delphi 10.4 Sydney.
 
 Version 1.7.0 - December 19, 2018
