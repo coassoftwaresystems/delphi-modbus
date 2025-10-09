@@ -62,7 +62,7 @@ begin
         ,AImage
         ,False
         ,DMB_LICENSE
-        ,'Delphi Modbus');
+        ,'Delphi ModbusTCP');
     end;
   end;
 end;
