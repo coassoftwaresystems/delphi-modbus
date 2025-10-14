@@ -11,10 +11,6 @@ The components can be used in Delphi versions 2007 and higher. The components
 are based on the Internet Direct (aka 'Indy') components, which ship with 
 Delphi.
 
-A Delphi 2005 note: the Indy 10 packages which ship with Delphi 2005 are very
-old, and DelphiModbus requires them to be replaced by a more recent version
-which is available for download from the Indy project website.
-
 Packages are provided and tested for all mentioned Delphi versions, although
 full testing occurs only on 2007, XE3 and the latest version (which are my main
 Delphi versions for production use). I expect that the Delphi 2006 packages will
@@ -44,7 +40,7 @@ The Delphi Modbus components have been successfully installed and tested on
 Lazarus 0.9.29 with FPC 2.5.1 on Win32. The package has a dependency on the
 Indy 10 package provided by the CodeTyphoon FPC distribution, which should be
 installed first (http://www.pilotlogic.com/).
-Lazarus support is a community effort, and is not including in standard testing.
+Lazarus support is a community effort and is not including in standard testing.
 Please feel free to submit a pull request to improve it! 
 
 
