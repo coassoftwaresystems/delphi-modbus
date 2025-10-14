@@ -28,21 +28,28 @@
     <DelphiCompile Include="dclDelphiModbus2007.dpk">
       <MainSource>MainSource</MainSource>
     </DelphiCompile>
-    <DCCReference Include="$(SystemRoot)\system32\DelphiModbus2007.dcp" />
-    <DCCReference Include="$(SystemRoot)\system32\designide.dcp" />
-    <DCCReference Include="$(SystemRoot)\system32\rtl.dcp" />
-    <DCCReference Include="$(SystemRoot)\system32\vcl.dcp" />
-    <DCCReference Include="$(SystemRoot)\system32\vclactnband.dcp" />
-    <DCCReference Include="$(SystemRoot)\system32\vcljpg.dcp" />
-    <DCCReference Include="$(SystemRoot)\system32\vclx.dcp" />
-    <DCCReference Include="$(SystemRoot)\system32\xmlrtl.dcp" />
-    <DCCReference Include="..\source\AboutComponentEditor.pas" />
-    <DCCReference Include="..\source\frm_About.pas">
+    <DCCReference Include="$(SystemRoot)\DelphiModbus2007.dcp" />
+    <DCCReference Include="$(SystemRoot)\designide.dcp" />
+    <DCCReference Include="$(SystemRoot)\rtl.dcp" />
+    <DCCReference Include="$(SystemRoot)\vcl.dcp" />
+    <DCCReference Include="$(SystemRoot)\vclactnband.dcp" />
+    <DCCReference Include="$(SystemRoot)\vcljpg.dcp" />
+    <DCCReference Include="$(SystemRoot)\vclx.dcp" />
+    <DCCReference Include="$(SystemRoot)\xmlrtl.dcp" />
+    <DCCReference Include="..\..\source\ModbusSplash.pas" />
+    <DCCReference Include="..\..\source\AboutComponentEditor.pas" />
+    <DCCReference Include="..\..\source\frm_About.pas">
       <Form>frmAbout</Form>
     </DCCReference>
-    <DCCReference Include="..\source\ModbusReg.dcr" />
-    <DCCReference Include="..\source\ModbusReg.dcr" />
-    <DCCReference Include="..\source\ModbusReg.pas" />
-    <DCCReference Include="..\source\ModbusSplash.pas" />
+    <DCCReference Include="..\..\source\ModbusReg.pas" />
+    <DCCReference Include="..\..\source\ModbusSplash.pas" />
+    <DCCReference Include="..\..\source\AboutComponentEditor.pas" />
+    <DCCReference Include="..\..\source\frm_About.pas">
+      <Form>frmAbout</Form>
+    </DCCReference>
+    <DCCReference Include="..\..\source\ModbusReg.dcr" />
+    <DCCReference Include="..\..\source\ModbusReg.dcr" />
+    <DCCReference Include="..\..\source\ModbusReg.pas" />
+    <DCCReference Include="..\..\source\ModbusSplash.pas" />
   </ItemGroup>
 </Project>

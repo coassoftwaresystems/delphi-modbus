@@ -89,7 +89,7 @@
         <DelphiCompile Include="$(MainSource)">
             <MainSource>MainSource</MainSource>
         </DelphiCompile>
-        <DCCReference Include="..\source\ModbusReg.dcr"/>
+        <DCCReference Include="..\..\source\ModbusReg.dcr"/>
         <DCCReference Include="rtl.dcp"/>
         <DCCReference Include="DelphiModbus12Athens.dcp"/>
         <DCCReference Include="vcl.dcp"/>
@@ -98,12 +98,12 @@
         <DCCReference Include="vclactnband.dcp"/>
         <DCCReference Include="vclx.dcp"/>
         <DCCReference Include="vclimg.dcp"/>
-        <DCCReference Include="..\source\ModbusReg.pas"/>
-        <DCCReference Include="..\source\frm_About.pas">
+        <DCCReference Include="..\..\source\ModbusReg.pas"/>
+        <DCCReference Include="..\..\source\frm_About.pas">
             <Form>frmAbout</Form>
         </DCCReference>
-        <DCCReference Include="..\source\AboutComponentEditor.pas"/>
-        <DCCReference Include="..\source\ModbusSplash.pas"/>
+        <DCCReference Include="..\..\source\AboutComponentEditor.pas"/>
+        <DCCReference Include="..\..\source\ModbusSplash.pas"/>
         <BuildConfiguration Include="Base">
             <Key>Base</Key>
         </BuildConfiguration>

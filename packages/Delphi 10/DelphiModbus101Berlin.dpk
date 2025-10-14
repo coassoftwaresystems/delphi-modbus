@@ -36,11 +36,11 @@ requires
   IndySystem;
 
 contains
-  IdModbusClient in '..\source\IdModbusClient.pas',
-  IdModbusServer in '..\source\IdModbusServer.pas',
-  ModbusConsts in '..\source\ModbusConsts.pas',
-  ModbusTypes in '..\source\ModbusTypes.pas',
-  ModbusStrConsts in '..\source\ModbusStrConsts.pas',
-  ModbusUtils in '..\source\ModbusUtils.pas';
+  IdModbusClient in '..\..\source\IdModbusClient.pas',
+  IdModbusServer in '..\..\source\IdModbusServer.pas',
+  ModbusConsts in '..\..\source\ModbusConsts.pas',
+  ModbusTypes in '..\..\source\ModbusTypes.pas',
+  ModbusStrConsts in '..\..\source\ModbusStrConsts.pas',
+  ModbusUtils in '..\..\source\ModbusUtils.pas';
 
 end.

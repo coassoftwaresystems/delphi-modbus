@@ -283,7 +283,7 @@ begin
   iSize := IOHandler.InputBuffer.Size;
   IOHandler.ReadBytes(ReceiveBuffer, iSize);
   // prevent writing data beyond the size of the ResponseBuffer
-  Move(ReceiveBuffer[0], ResponseBuffer, Min(iSize, Sizeof(ResponseBuffer));
+  Move(ReceiveBuffer[0], ResponseBuffer, Min(iSize, Sizeof(ResponseBuffer)));
 
   DoReceiveBuffer(ARequestBuffer, ResponseBuffer, ReceiveBuffer);
 
