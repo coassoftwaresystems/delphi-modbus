@@ -62,7 +62,6 @@ begin
 { Register the property editors }
   RegisterPropertyEditor(TypeInfo(String), TIdModbusClient, 'Version', TAboutPropertyEditor);
   RegisterPropertyEditor(TypeInfo(String), TIdModbusServer, 'Version', TAboutPropertyEditor);
-{$ENDIF}
 { Register the property categories for the client component }
   RegisterPropertyInCategory(sModbus, TIdModbusClient, 'AutoConnect');
   RegisterPropertyInCategory(sModbus, TIdModbusClient, 'BaseRegister');
@@ -98,6 +97,7 @@ begin
   RegisterPropertyInCategory(sModbus, TIdModbusServer, 'OnWriteRegisters');
 
   RegisterIDEPlugins;
+{$ENDIF}
 end;
 
 

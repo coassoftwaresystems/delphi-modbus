@@ -7,6 +7,7 @@ Version 2.0.0
 - Added new events in TIdModbusClient to log data in Send- and Receive buffers.
 - Fix: IdModbusClient - prevent writing data beyond the size of the response buffer.
 - Fix: IdModbusClient - clear the input buffer before sending a new request.
+- Fix: support for recent version of Lazarus with FPC.
 - Changed folder structure / separate folder for packages per Delphi version.
 - Drop support for old Delphi versions (before 2007) and drop support for Indy 9.
 

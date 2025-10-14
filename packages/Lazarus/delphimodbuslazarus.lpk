@@ -51,7 +51,7 @@
     <Type Value="RunAndDesignTime"/>
     <RequiredPkgs Count="2">
       <Item1>
-        <PackageName Value="pl_indycomp"/>
+        <PackageName Value="indylaz"/>
       </Item1>
       <Item2>
         <PackageName Value="FCL"/>

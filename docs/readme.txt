@@ -37,9 +37,7 @@ time package. Delphi will now report that the components have been installed.
 Support for Free Pascal / Lazarus
 =================================
 The Delphi Modbus components have been successfully installed and tested on
-Lazarus 0.9.29 with FPC 2.5.1 on Win32. The package has a dependency on the
-Indy 10 package provided by the CodeTyphoon FPC distribution, which should be
-installed first (http://www.pilotlogic.com/).
+Lazarus 4.2 with FPC 3.2.2 on Win64.
 Lazarus support is a community effort and is not including in standard testing.
 Please feel free to submit a pull request to improve it! 
 
