@@ -35,6 +35,9 @@ type
   TModBusFunction = Byte;
 
 type
+  TModBusTransportMode = (tmTCP, tmRTU);
+
+type
   TModBusDataBuffer = array[0..260] of Byte;
 
 type

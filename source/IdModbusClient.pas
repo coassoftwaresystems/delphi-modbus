@@ -51,7 +51,7 @@ type
   private
     FAutoConnect: Boolean;
     FBaseRegister: Word;
-    FIncludeCrc: Boolean;
+    FTransportMode: TModBusTransportMode;
     FOnSendBuffer: TModbusClientSendBufferEvent;
     FOnReceiveBuffer: TModbusClientReceiveBufferEvent;
     FOnResponseError: TModbusClientErrorEvent;
@@ -120,10 +120,10 @@ type
   published
     property AutoConnect: Boolean read FAutoConnect write FAutoConnect default True;
     property BaseRegister: Word read FBaseRegister write FBaseRegister default 1;
-    property IncludeCrc: Boolean read FIncludeCrc write FIncludeCrc default False;
     property ReadTimeout: Integer read FReadTimeout write FReadTimeout default 0;
     property Port default MB_PORT;
     property TimeOut: Cardinal read FTimeOut write FTimeout default 15000;
+    property TransportMode: TModBusTransportMode read FTransportMode write FTransportMode default tmTCP;
     property UnitID: Byte read FUnitID write FUnitID default MB_IGNORE_UNITID;
     property Version: String read GetVersion write SetVersion stored False;
   { events }
@@ -154,7 +154,7 @@ begin
   inherited;
   FAutoConnect := True;
   FBaseRegister := 1;
-  FIncludeCrc := False;
+  FTransportMode := tmTCP;
   FLastTransactionID := 0;
   FReadTimeout := 0;
   FUnitID := MB_IGNORE_UNITID;
@@ -252,7 +252,7 @@ begin
     IOHandler.InputBuffer.Clear;
 { Writeout the data to the connection }
   Buffer := RawToBytes(ARequestBuffer, Swap16(ARequestBuffer.Header.RecLength) + 6);
-  if FIncludeCrc then
+  if (FTransportMode = tmRTU) then
   begin
     Crc := CalculateCRC16(Buffer);
   {$IFDEF DMB_DELPHIXE3}
@@ -260,8 +260,8 @@ begin
   {$ELSE}
     SetLength(Buffer, Length(Buffer) + 2);
   {$ENDIF}
-    Buffer[High(Buffer)] := Hi(Crc);
     Buffer[High(Buffer) - 1] := Lo(Crc);
+    Buffer[High(Buffer)] := Hi(Crc);
   end;
 
   IOHandler.WriteDirect(Buffer);
@@ -287,6 +287,25 @@ begin
   IOHandler.ReadBytes(ReceiveBuffer, iSize);
   // prevent writing data beyond the size of the ResponseBuffer
   Move(ReceiveBuffer[0], ResponseBuffer, Min(iSize, Sizeof(ResponseBuffer)));
+
+  if (FTransportMode = tmRTU) then
+  begin
+    // Validate CRC for RTU mode
+    if (iSize >= 2) then
+    begin
+      Crc := CalculateCRC16(Copy(ReceiveBuffer, 0, iSize - 2));
+      if ((Lo(Crc) <> ReceiveBuffer[iSize - 2]) or (Hi(Crc) <> ReceiveBuffer[iSize - 1])) then
+      begin
+        Result := False;
+        Exit;
+      end;
+    end
+    else
+    begin
+      Result := False;
+      Exit;
+    end;
+  end;
 
   DoReceiveBuffer(ARequestBuffer, ResponseBuffer, ReceiveBuffer);
 

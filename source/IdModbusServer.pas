@@ -82,6 +82,7 @@ type
     FOnWriteCoils: TModBusCoilWriteEvent;
     FOnWriteRegisters: TModBusRegisterWriteEvent;
     FPause: Boolean;
+    FTransportMode: TModBusTransportMode;
     FUnitID: Byte;
     function GetVersion: String;
     procedure SetVersion(const Value: String);
@@ -133,6 +134,7 @@ type
     property OneShotConnection: Boolean read FOneShotConnection write FOneShotConnection default False;
     property MaxRegister: Word read FMaxRegister write FMaxRegister default $FFFF;
     property MinRegister: Word read FMinRegister write FMinRegister default 1;
+    property TransportMode: TModBusTransportMode read FTransportMode write FTransportMode default tmTCP;
     property UnitID: Byte read FUnitID write FUnitID default MB_IGNORE_UNITID;
     property Version: String read GetVersion write SetVersion stored False;
   { events }
@@ -175,6 +177,7 @@ begin
   FOnWriteCoils := nil;
   FOnWriteRegisters := nil;
   FPause := False;
+  FTransportMode := tmTCP;
   FUnitID := MB_IGNORE_UNITID;
 end;
 
@@ -340,6 +343,17 @@ begin
     iCount := Length(Buffer);
     if (iCount > 0) then
     begin
+      if (FTransportMode = tmRTU) then
+      begin
+        // Validate CRC for RTU mode
+        if (iCount >= 2) then
+        begin
+          if (CalculateCRC16(Copy(Buffer, 0, iCount - 2)) <> Word((Buffer[iCount - 1] shl 8) or Buffer[iCount - 2])) then
+            Exit; // Invalid CRC, ignore the request
+        end
+        else
+          Exit; // Not enough data for CRC
+      end;
       Move(Buffer[0], ReceiveBuffer, Min(iCount, SizeOf(ReceiveBuffer)));
       if FLogEnabled then
         LogRequestBuffer(AContext, ReceiveBuffer, iCount);
@@ -582,6 +596,7 @@ procedure TIdModBusServer.SendError(const AContext: TIdContext;
 var
   SendBuffer: TModBusExceptionBuffer;
   Buffer: TIdBytes;
+  Crc: Word;
 begin
   if Active then
   begin
@@ -591,6 +606,17 @@ begin
     SendBuffer.Header.RecLength := Swap16(3);
 
     Buffer := RawToBytes(SendBuffer, SizeOf(SendBuffer));
+    if (FTransportMode = tmRTU) then
+    begin
+      Crc := CalculateCRC16(Buffer);
+    {$IFDEF DMB_DELPHIXE3}
+      SetLength(Buffer, IndyLength(Buffer) + 2);
+    {$ELSE}
+      SetLength(Buffer, Length(Buffer) + 2);
+    {$ENDIF}
+      Buffer[High(Buffer) - 1] := Lo(Crc);
+      Buffer[High(Buffer)] := Hi(Crc);
+    end;
     AContext.Connection.Socket.WriteDirect(Buffer);
     if FLogEnabled then
       LogExceptionBuffer(AContext, SendBuffer);
@@ -605,6 +631,7 @@ var
   L: Integer;
   ValidRequest : Boolean;
   Buffer: TIdBytes;
+  Crc: Word;
 begin
   if Active then
   begin
@@ -656,6 +683,17 @@ begin
     if ValidRequest then
     begin
       Buffer := RawToBytes(SendBuffer, Swap16(SendBuffer.Header.RecLength) + 6);
+      if (FTransportMode = tmRTU) then
+      begin
+        Crc := CalculateCRC16(Buffer);
+      {$IFDEF DMB_DELPHIXE3}
+        SetLength(Buffer, IndyLength(Buffer) + 2);
+      {$ELSE}
+        SetLength(Buffer, Length(Buffer) + 2);
+      {$ENDIF}
+        Buffer[High(Buffer) - 1] := Lo(Crc);
+        Buffer[High(Buffer)] := Hi(Crc);
+      end;
       AContext.Connection.Socket.WriteDirect(Buffer);
       if FLogEnabled then
         LogResponseBuffer(AContext, SendBuffer, Swap16(SendBuffer.Header.RecLength) + 6);
