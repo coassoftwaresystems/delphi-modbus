@@ -16,49 +16,34 @@ These function codes allow vendors to implement proprietary device-specific func
 
 ## Client Implementation
 
-To use private functions from a client, you need to:
-
-1. Assign event handlers for `OnPrivateFunction` and `OnPrivateResponse`
-2. Call the `SendPrivateFunction` method with the desired function code
+To use private functions from a client, call the `SendPrivateFunction` method with the function code and request data, and retrieve the response data.
 
 ### Example
 
 ```pascal
-procedure TForm1.ModbusClientPrivateFunction(const FunctionCode: Byte;
-  const RequestBuffer: TModBusRequestBuffer; var Data: TModBusDataBuffer;
-  var DataSize: Integer);
-begin
-  // Populate the request data for the private function
-  // For example, to send a command with 4 bytes of data:
-  Data[0] := $01;  // Command byte
-  Data[1] := $00;  // Parameter 1
-  Data[2] := $00;  // Parameter 2
-  Data[3] := $00;  // Parameter 3
-  DataSize := 4;   // Total bytes to send
-end;
-
-procedure TForm1.ModbusClientPrivateResponse(const FunctionCode: Byte;
-  const ResponseBuffer: TModBusResponseBuffer; const Data: TModBusDataBuffer;
-  const DataSize: Integer);
+procedure TForm1.ButtonSendPrivateFunctionClick(Sender: TObject);
 var
+  RequestData: array[0..3] of Byte;
+  ResponseData: array[0..255] of Byte;
   i: Integer;
 begin
-  // Process the response data from the private function
-  Memo1.Lines.Add(Format('Received response for function $%x with %d bytes:', 
-    [FunctionCode, DataSize]));
-  for i := 0 to DataSize - 1 do
-    Memo1.Lines.Add(Format('  Byte[%d] = $%x', [i, Data[i]]));
-end;
-
-procedure TForm1.ButtonSendPrivateFunctionClick(Sender: TObject);
-begin
-  // Assign event handlers
-  IdModbusClient1.OnPrivateFunction := ModbusClientPrivateFunction;
-  IdModbusClient1.OnPrivateResponse := ModbusClientPrivateResponse;
+  // Prepare request data
+  RequestData[0] := $01;  // Command byte
+  RequestData[1] := $00;  // Parameter 1
+  RequestData[2] := $00;  // Parameter 2
+  RequestData[3] := $00;  // Parameter 3
   
-  // Send private function code 0x41 (65 decimal)
-  if IdModbusClient1.SendPrivateFunction($41) then
-    ShowMessage('Private function sent successfully')
+  // Send private function code 0x41 (65 decimal) with request data
+  if IdModbusClient1.SendPrivateFunction($41, RequestData, ResponseData) then
+  begin
+    ShowMessage('Private function sent successfully');
+    
+    // Process response data
+    Memo1.Lines.Add('Received response:');
+    for i := 0 to High(ResponseData) do
+      if ResponseData[i] <> 0 then  // Display non-zero bytes
+        Memo1.Lines.Add(Format('  Byte[%d] = $%x', [i, ResponseData[i]]));
+  end
   else
     ShowMessage('Private function failed');
 end;
@@ -68,7 +53,6 @@ end;
 
 The `SendPrivateFunction` method will raise an `EModbusInvalidPrivateFunction` exception if:
 - The function code is not in the valid private function ranges (0x41-0x48 or 0x64-0x6E)
-- The `OnPrivateFunction` event handler is not assigned
 
 ## Server Implementation
 

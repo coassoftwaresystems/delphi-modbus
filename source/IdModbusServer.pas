@@ -365,6 +365,7 @@ var
   Data: TModRegisterData;
   Buffer: TIdBytes;
   DeviceIDData: TModDeviceIdentificationData;
+  PrivateResponseData: TModBusDataBuffer;
 begin
 { Initialize all register data to 0 }
   FillChar(Data[0], SizeOf(Data), 0);
@@ -616,27 +617,18 @@ begin
       if IsValidPrivateFunctionCode(ReceiveBuffer.FunctionCode) then
       begin
         // Handle private function
-        if Assigned(FOnPrivateFunction) then
-        begin
-          ErrorCode := mbeOk;
-          FillChar(Data, SizeOf(Data), 0);
-          iCount := 0; // Using iCount as ResponseDataSize
-          
-          // Call user's event handler to process the private function
-          DoPrivateFunction(AContext, ReceiveBuffer.FunctionCode, ReceiveBuffer, 
-            TModBusDataBuffer(Data), iCount, ErrorCode);
-          
-          if (ErrorCode = mbeOk) then
-            SendPrivateResponse(AContext, ReceiveBuffer, TModBusDataBuffer(Data), iCount)
-          else
-            SendError(AContext, ErrorCode, ReceiveBuffer);
-        end
+        ErrorCode := mbeOk;
+        FillChar(PrivateResponseData, SizeOf(PrivateResponseData), 0);
+        iCount := 0; // Using iCount as ResponseDataSize
+        
+        // Call user's event handler to process the private function
+        DoPrivateFunction(AContext, ReceiveBuffer.FunctionCode, ReceiveBuffer, 
+          PrivateResponseData, iCount, ErrorCode);
+        
+        if (ErrorCode = mbeOk) then
+          SendPrivateResponse(AContext, ReceiveBuffer, PrivateResponseData, iCount)
         else
-        begin
-          // No handler assigned for private functions
-          SendError(AContext, mbeIllegalFunction, ReceiveBuffer);
-          DoInvalidFunction(AContext, ReceiveBuffer.FunctionCode, ReceiveBuffer);
-        end;
+          SendError(AContext, ErrorCode, ReceiveBuffer);
       end
       else if (ReceiveBuffer.FunctionCode <> 0) then
       begin

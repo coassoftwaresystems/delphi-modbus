@@ -46,12 +46,6 @@ type
     const ResponseBuffer: TModBusResponseBuffer; const RawBuffer: TIdBytes) of object;
   TModbusClientHeaderValidationEvent = procedure(const ReceivedSize: Integer;
     const ExpectedSize: Integer; const RawBuffer: TIdBytes) of object;
-  TModbusClientPrivateFunctionEvent = procedure(const FunctionCode: Byte;
-    const RequestBuffer: TModBusRequestBuffer; var Data: TModBusDataBuffer;
-    var DataSize: Integer) of object;
-  TModbusClientPrivateResponseEvent = procedure(const FunctionCode: Byte;
-    const ResponseBuffer: TModBusResponseBuffer; const Data: TModBusDataBuffer;
-    const DataSize: Integer) of object;
 
 type
 {$I ModBusPlatforms.inc}
@@ -66,8 +60,6 @@ type
     FOnResponseError: TModbusClientErrorEvent;
     FOnResponseMismatch: TModBusClientResponseMismatchEvent;
     FOnHeaderValidation: TModbusClientHeaderValidationEvent;
-    FOnPrivateFunction: TModbusClientPrivateFunctionEvent;
-    FOnPrivateResponse: TModbusClientPrivateResponseEvent;
     FLastTransactionID: Word;
     FReadTimeout: Integer;
     FTimeOut: Cardinal;
@@ -132,7 +124,8 @@ type
     function WriteDWord(const RegNo: Word; const Value: DWord): Boolean;
     function WriteSingle(const RegNo: Word; const Value: Single): Boolean;
     function WriteString(const RegNo: Word; const Text: String): Boolean;
-    function SendPrivateFunction(const FunctionCode: Byte): Boolean;
+    function SendPrivateFunction(const FunctionCode: Byte; const RequestData: array of Byte;
+      out ResponseData: array of Byte): Boolean;
   published
     property AutoConnect: Boolean read FAutoConnect write FAutoConnect default True;
     property BaseRegister: Word read FBaseRegister write FBaseRegister default 1;
@@ -149,8 +142,6 @@ type
     property OnResponseError: TModbusClientErrorEvent read FOnResponseError write FOnResponseError;
     property OnResponseMismatch: TModBusClientResponseMismatchEvent read FOnResponseMismatch write FOnResponseMismatch;
     property OnHeaderValidation: TModbusClientHeaderValidationEvent read FOnHeaderValidation write FOnHeaderValidation;
-    property OnPrivateFunction: TModbusClientPrivateFunctionEvent read FOnPrivateFunction write FOnPrivateFunction;
-    property OnPrivateResponse: TModbusClientPrivateResponseEvent read FOnPrivateResponse write FOnPrivateResponse;
   end;
 
 
@@ -186,8 +177,6 @@ begin
   FOnResponseError := nil;
   FOnResponseMismatch := nil;
   FOnHeaderValidation := nil;
-  FOnPrivateFunction := nil;
-  FOnPrivateResponse := nil;
 end;
 
 
@@ -998,11 +987,11 @@ begin
 end;
 
 
-function TIdModBusClient.SendPrivateFunction(const FunctionCode: Byte): Boolean;
+function TIdModBusClient.SendPrivateFunction(const FunctionCode: Byte; const RequestData: array of Byte;
+  out ResponseData: array of Byte): Boolean;
 var
   RequestBuffer: TModBusRequestBuffer;
   ResponseBuffer: TModBusResponseBuffer;
-  Data: TModBusDataBuffer;
   DataSize: Integer;
   Buffer: TIdBytes;
   Crc: Word;
@@ -1011,16 +1000,13 @@ var
   ReceiveBuffer: TIdBytes;
   bNewConnection: Boolean;
   BufferSize: Integer;
+  i: Integer;
 begin
   Result := False;
   
   // Validate function code is in the private/user-defined range
   if not IsValidPrivateFunctionCode(FunctionCode) then
     raise EModbusInvalidPrivateFunction.CreateFmt('Invalid private function code: $%x. Must be $41..$48 or $64..$6E', [FunctionCode]);
-
-  // Check if event handler is assigned
-  if not Assigned(FOnPrivateFunction) then
-    raise EModbusInvalidPrivateFunction.Create('OnPrivateFunction event handler must be assigned to use private functions');
 
   bNewConnection := False;
   if FAutoConnect and not Connected then
@@ -1030,10 +1016,8 @@ begin
   end;
 
   try
-    // Initialize buffer and request data from user
+    // Initialize buffer
     FillChar(RequestBuffer, SizeOf(RequestBuffer), 0);
-    FillChar(Data, SizeOf(Data), 0);
-    DataSize := 0;
     
     // Build request header
     RequestBuffer.TCPHeader.TransactionID := GetNewTransactionID;
@@ -1041,15 +1025,13 @@ begin
     RequestBuffer.FunctionCode := FunctionCode;
     RequestBuffer.Header.UnitID := FUnitID;
     
-    // Call event handler to populate request data
-    FOnPrivateFunction(FunctionCode, RequestBuffer, Data, DataSize);
-    
-    // Copy user data to request buffer
+    // Copy request data to buffer
+    DataSize := Length(RequestData);
     if DataSize > 0 then
     begin
       if DataSize > SizeOf(RequestBuffer.MBPData) then
         DataSize := SizeOf(RequestBuffer.MBPData);
-      Move(Data[0], RequestBuffer.MBPData[0], DataSize);
+      Move(RequestData[0], RequestBuffer.MBPData[0], DataSize);
     end;
     
     // Set record length for TCP mode
@@ -1161,21 +1143,15 @@ begin
     // Check if the result has the same function code as the request
     if (RequestBuffer.FunctionCode = ResponseBuffer.FunctionCode) then
     begin
-      // Success - call response event handler
-      if Assigned(FOnPrivateResponse) then
+      // Success - copy response data to output parameter
+      DataSize := iSize - MB_TCP_HEADER_SIZE - 2; // Subtract TCP header + UnitID + FunctionCode
+      if (FTransportMode = tmRTU) then
+        DataSize := iSize - 2 - 2; // Subtract UnitID + FunctionCode + CRC
+      
+      if (DataSize > 0) and (Length(ResponseData) > 0) then
       begin
-        DataSize := iSize - MB_TCP_HEADER_SIZE - 2; // Subtract TCP header + UnitID + FunctionCode
-        if (FTransportMode = tmRTU) then
-          DataSize := iSize - 2 - 2; // Subtract UnitID + FunctionCode + CRC
-        
-        if DataSize > 0 then
-        begin
-          FillChar(Data, SizeOf(Data), 0);
-          Move(ResponseBuffer.MBPData[0], Data[0], Min(DataSize, SizeOf(Data)));
-          FOnPrivateResponse(FunctionCode, ResponseBuffer, Data, DataSize);
-        end
-        else
-          FOnPrivateResponse(FunctionCode, ResponseBuffer, Data, 0);
+        for i := 0 to Min(DataSize - 1, High(ResponseData)) do
+          ResponseData[i] := ResponseBuffer.MBPData[i];
       end;
     end
     else

@@ -79,8 +79,6 @@ begin
   RegisterPropertyInCategory(sModbus, TIdModbusClient, 'OnResponseError');
   RegisterPropertyInCategory(sModbus, TIdModbusClient, 'OnResponseMismatch');
   RegisterPropertyInCategory(sModbus, TIdModbusClient, 'OnSendBuffer');
-  RegisterPropertyInCategory(sModbus, TIdModbusClient, 'OnPrivateFunction');
-  RegisterPropertyInCategory(sModbus, TIdModbusClient, 'OnPrivateResponse');
 
 { Register the property categories for the server component }
   RegisterPropertyInCategory(sModbus, TIdModbusServer, 'BaseRegister');

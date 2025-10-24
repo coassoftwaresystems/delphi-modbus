@@ -36,14 +36,19 @@ SOFTWARE.
     msrPLC.OnPrivateFunction := ExampleServerPrivateFunction;
     
   Client Usage:
-    1. Assign the OnPrivateFunction and OnPrivateResponse event handlers
-    2. Call SendPrivateFunction with your custom function code
+    1. Prepare request data as an array of bytes
+    2. Call SendPrivateFunction with the function code and request data
+    3. Process response data from the output parameter
     
   Example (Client):
-    mscPLC.OnPrivateFunction := ExampleClientPrivateFunction;
-    mscPLC.OnPrivateResponse := ExampleClientPrivateResponse;
-    if mscPLC.SendPrivateFunction($41) then
-      ShowMessage('Success');
+    var
+      RequestData: array[0..0] of Byte;
+      ResponseData: array[0..255] of Byte;
+    begin
+      RequestData[0] := $01;  // Command
+      if mscPLC.SendPrivateFunction($41, RequestData, ResponseData) then
+        ShowMessage('Success');
+    end;
 }
 
 unit PrivateFunctionExample;
@@ -61,19 +66,6 @@ procedure ExampleServerPrivateFunction(
   var ResponseData: TModBusDataBuffer;
   var ResponseDataSize: Integer;
   var ErrorCode: Byte);
-
-// Client-side example event handlers for Private Functions
-procedure ExampleClientPrivateFunction(
-  const FunctionCode: Byte;
-  const RequestBuffer: TModBusRequestBuffer;
-  var Data: TModBusDataBuffer;
-  var DataSize: Integer);
-
-procedure ExampleClientPrivateResponse(
-  const FunctionCode: Byte;
-  const ResponseBuffer: TModBusResponseBuffer;
-  const Data: TModBusDataBuffer;
-  const DataSize: Integer);
 
 implementation
 
@@ -147,90 +139,6 @@ begin
     else
       // Unknown private function code
       ErrorCode := mbeIllegalFunction;
-  end;
-end;
-
-
-// Client implementation - prepare request data
-procedure ExampleClientPrivateFunction(
-  const FunctionCode: Byte;
-  const RequestBuffer: TModBusRequestBuffer;
-  var Data: TModBusDataBuffer;
-  var DataSize: Integer);
-begin
-  // Prepare request data based on function code
-  case FunctionCode of
-    $41: // Custom device identification
-      begin
-        Data[0] := $01;  // Command: Get device info
-        DataSize := 1;
-      end;
-      
-    $42: // Custom data read
-      begin
-        Data[0] := $05;  // Data address to read
-        DataSize := 1;
-      end;
-      
-    $64: // Custom diagnostic function
-      begin
-        // No data needed for this example
-        DataSize := 0;
-      end;
-      
-    else
-      DataSize := 0;
-  end;
-end;
-
-
-// Client implementation - process response data
-procedure ExampleClientPrivateResponse(
-  const FunctionCode: Byte;
-  const ResponseBuffer: TModBusResponseBuffer;
-  const Data: TModBusDataBuffer;
-  const DataSize: Integer);
-var
-  DeviceID: Word;
-  FirmwareVersion: String;
-begin
-  // Process response based on function code
-  case FunctionCode of
-    $41: // Custom device identification
-      begin
-        if DataSize >= 6 then
-        begin
-          // Extract device info
-          DeviceID := (Data[1] shl 8) or Data[2];
-          FirmwareVersion := Format('%d.%d', [Data[3], Data[4]]);
-          
-          // Use the data (in real application, update UI or store values)
-          // WriteLn(Format('Device ID: $%x', [DeviceID]));
-          // WriteLn(Format('Firmware: %s', [FirmwareVersion]));
-          // WriteLn(Format('Hardware: $%x', [Data[5]]));
-        end;
-      end;
-      
-    $42: // Custom data read
-      begin
-        if DataSize >= 4 then
-        begin
-          // Process the custom data
-          // WriteLn(Format('Address: $%x', [Data[0]]));
-          // WriteLn(Format('Data: $%x $%x $%x', [Data[1], Data[2], Data[3]]));
-        end;
-      end;
-      
-    $64: // Custom diagnostic function
-      begin
-        if DataSize >= 3 then
-        begin
-          // Process diagnostic data
-          // WriteLn(Format('Status: $%x', [Data[0]]));
-          // WriteLn(Format('Temperature: %d', [Data[1]]));
-          // WriteLn(Format('Load: %d%%', [Data[2]]));
-        end;
-      end;
   end;
 end;
 
