@@ -31,6 +31,9 @@ unit ModbusTypes;
 
 interface
 
+uses
+  SysUtils;
+
 type
   TModBusFunction = Byte;
 
