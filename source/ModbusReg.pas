@@ -68,26 +68,32 @@ begin
   RegisterPropertyInCategory(sModbus, TIdModbusClient, 'BlockLength');
   RegisterPropertyInCategory(sModbus, TIdModbusClient, 'ReadTimeout');
   RegisterPropertyInCategory(sModbus, TIdModbusClient, 'TimeOut');
+  RegisterPropertyInCategory(sModbus, TIdModbusClient, 'TransportMode');
   RegisterPropertyInCategory(sModbus, TIdModbusClient, 'UnitID');
+  RegisterPropertyInCategory(sModbus, TIdModbusClient, 'ValidateHeader');
   RegisterPropertyInCategory(sModbus, TIdModbusClient, 'Version');
 { Register the property categories for the client events }
-  RegisterPropertyInCategory(sModbus, TIdModbusClient, 'OnSendBuffer');
+  RegisterPropertyInCategory(sModbus, TIdModbusClient, 'OnHeaderValidation');
   RegisterPropertyInCategory(sModbus, TIdModbusClient, 'OnReceiveBuffer');
   RegisterPropertyInCategory(sModbus, TIdModbusClient, 'OnResponseError');
   RegisterPropertyInCategory(sModbus, TIdModbusClient, 'OnResponseMismatch');
+  RegisterPropertyInCategory(sModbus, TIdModbusClient, 'OnSendBuffer');
 
 { Register the property categories for the server component }
   RegisterPropertyInCategory(sModbus, TIdModbusServer, 'BaseRegister');
   RegisterPropertyInCategory(sModbus, TIdModbusServer, 'OneShotConnection');
   RegisterPropertyInCategory(sModbus, TIdModbusServer, 'MaxRegister');
   RegisterPropertyInCategory(sModbus, TIdModbusServer, 'MinRegister');
+  RegisterPropertyInCategory(sModbus, TIdModbusServer, 'TransportMode');
   RegisterPropertyInCategory(sModbus, TIdModbusServer, 'UnitID');
+  RegisterPropertyInCategory(sModbus, TIdModbusServer, 'ValidateHeader');
   RegisterPropertyInCategory(sModbus, TIdModbusServer, 'Version');
   RegisterPropertyInCategory(sLogging, TIdModbusServer, 'LogEnabled');
   RegisterPropertyInCategory(sLogging, TIdModbusServer, 'LogFile');
   RegisterPropertyInCategory(sLogging, TIdModbusServer, 'LogTimeFormat');
 { Register the property categories for the server events }
   RegisterPropertyInCategory(sModbus, TIdModbusServer, 'OnError');
+  RegisterPropertyInCategory(sModbus, TIdModbusServer, 'OnHeaderValidation');
   RegisterPropertyInCategory(sModbus, TIdModbusServer, 'OnInvalidFunction');
   RegisterPropertyInCategory(sModbus, TIdModbusServer, 'OnReadCoils');
   RegisterPropertyInCategory(sModbus, TIdModbusServer, 'OnReadHoldingRegisters');

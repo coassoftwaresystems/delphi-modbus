@@ -60,6 +60,9 @@ type
   TModBusInvalidFunctionEvent = procedure(const Sender: TIdContext;
     const FunctionCode: TModBusFunction;
     const RequestBuffer: TModBusRequestBuffer) of object;
+  TModbusServerHeaderValidationEvent = procedure(const Sender: TIdContext;
+    const ReceivedSize: Integer; const ExpectedSize: Integer;
+    const RawBuffer: TIdBytes) of object;
 
 type
 {$I ModBusPlatforms.inc}
@@ -81,8 +84,10 @@ type
     FOnReadInputRegisters: TModBusRegisterReadEvent;
     FOnWriteCoils: TModBusCoilWriteEvent;
     FOnWriteRegisters: TModBusRegisterWriteEvent;
+    FOnHeaderValidation: TModbusServerHeaderValidationEvent;
     FPause: Boolean;
     FTransportMode: TModBusTransportMode;
+    FValidateHeader: TModBusHeaderValidation;
     FUnitID: Byte;
     function GetVersion: String;
     procedure SetVersion(const Value: String);
@@ -101,6 +106,8 @@ type
     function DoExecute(AContext: TIdContext): Boolean; override;
     procedure DoInvalidFunction(const AContext: TIdContext;
       const FunctionCode: TModBusFunction; const RequestBuffer: TModBusRequestBuffer); virtual;
+    procedure DoHeaderValidation(const AContext: TIdContext; const ReceivedSize: Integer;
+      const ExpectedSize: Integer; const Buffer: TIdBytes); virtual;
     procedure DoReadHoldingRegisters(const AContext: TIdContext; const RegNr, Count: Integer;
       var Data: TModRegisterData; const RequestBuffer: TModBusRequestBuffer; var ErrorCode: Byte); virtual;
     procedure DoReadInputRegisters(const AContext: TIdContext; const RegNr, Count: Integer;
@@ -136,6 +143,7 @@ type
     property MinRegister: Word read FMinRegister write FMinRegister default 1;
     property TransportMode: TModBusTransportMode read FTransportMode write FTransportMode default tmTCP;
     property UnitID: Byte read FUnitID write FUnitID default MB_IGNORE_UNITID;
+    property ValidateHeader: TModBusHeaderValidation read FValidateHeader write FValidateHeader default hvDisabled;
     property Version: String read GetVersion write SetVersion stored False;
   { events }
     property OnError: TModBusErrorEvent read FOnError write FOnError;
@@ -146,13 +154,14 @@ type
     property OnReadInputRegisters: TModBusRegisterReadEvent read FOnReadInputRegisters write FOnReadInputRegisters;
     property OnWriteCoils: TModBusCoilWriteEvent read FOnWriteCoils write FOnWriteCoils;
     property OnWriteRegisters: TModBusRegisterWriteEvent read FOnWriteRegisters write FOnWriteRegisters;
+    property OnHeaderValidation: TModbusServerHeaderValidationEvent read FOnHeaderValidation write FOnHeaderValidation;
   end; { TIdModBusServer }
 
 
 implementation
 
 uses
-  Math;
+  Math, ModbusStrConsts;
 
 { TIdModBusServer }
 
@@ -176,8 +185,10 @@ begin
   FOnReadInputRegisters := nil;
   FOnWriteCoils := nil;
   FOnWriteRegisters := nil;
+  FOnHeaderValidation := nil;
   FPause := False;
   FTransportMode := tmTCP;
+  FValidateHeader := hvDisabled;
   FUnitID := MB_IGNORE_UNITID;
 end;
 
@@ -361,6 +372,31 @@ begin
       begin
         // TCP mode: parse normally with TCP header
         Move(Buffer[0], ReceiveBuffer, Min(iCount, SizeOf(ReceiveBuffer)));
+        
+        // Validate MBAP header: check if RecLength matches received data
+        // RecLength field indicates number of bytes following it (excluding the TCP header)
+        if (FValidateHeader <> hvDisabled) then
+        begin
+          if (iCount >= SizeOf(TModBusTCPHeader)) then
+          begin
+            if (iCount <> Swap16(ReceiveBuffer.TCPHeader.RecLength) + MB_TCP_HEADER_SIZE) then
+            begin
+              DoHeaderValidation(AContext, iCount, Swap16(ReceiveBuffer.TCPHeader.RecLength) + MB_TCP_HEADER_SIZE, Buffer);
+              if (FValidateHeader = hvException) then
+                raise EModbusHeaderValidation.CreateFmt(sHeaderValidationError, [iCount, Swap16(ReceiveBuffer.TCPHeader.RecLength) + MB_TCP_HEADER_SIZE]);
+              // hvIgnore: just exit without raising exception
+              Exit;
+            end;
+          end
+          else
+          begin
+            // Not enough data for a valid MBAP header
+            DoHeaderValidation(AContext, iCount, SizeOf(TModBusTCPHeader), Buffer);
+            if (FValidateHeader = hvException) then
+              raise EModbusHeaderValidation.CreateFmt(sHeaderValidationError, [iCount, SizeOf(TModBusTCPHeader)]);
+            Exit;
+          end;
+        end;
       end;
       if FLogEnabled then
         LogRequestBuffer(AContext, ReceiveBuffer, iCount);
@@ -557,6 +593,14 @@ begin
 end;
 
 
+procedure TIdModBusServer.DoHeaderValidation(const AContext: TIdContext;
+  const ReceivedSize: Integer; const ExpectedSize: Integer; const Buffer: TIdBytes);
+begin
+  if Assigned(FOnHeaderValidation) then
+    FOnHeaderValidation(AContext, ReceivedSize, ExpectedSize, Buffer);
+end;
+
+
 procedure TIdModBusServer.DoReadCoils(const AContext: TIdContext;
   const RegNr, Count: Integer; var Data: TModCoilData;
   const RequestBuffer: TModBusRequestBuffer; var ErrorCode: Byte);
@@ -729,11 +773,11 @@ begin
       else
       begin
         // TCP mode: send with TCP header
-        Buffer := RawToBytes(SendBuffer, Swap16(SendBuffer.TCPHeader.RecLength) + 6);
+        Buffer := RawToBytes(SendBuffer, Swap16(SendBuffer.TCPHeader.RecLength) + MB_TCP_HEADER_SIZE);
       end;
       AContext.Connection.Socket.WriteDirect(Buffer);
       if FLogEnabled then
-        LogResponseBuffer(AContext, SendBuffer, Swap16(SendBuffer.TCPHeader.RecLength) + 6);
+        LogResponseBuffer(AContext, SendBuffer, Swap16(SendBuffer.TCPHeader.RecLength) + MB_TCP_HEADER_SIZE);
     end
     else
     begin

@@ -32,8 +32,9 @@ unit ModbusStrConsts;
 interface
 
 resourcestring
-  sModbus = 'Modbus';
+  sHeaderValidationError = 'Modbus header validation failed: received %d bytes, expected %d bytes';
   sLogging = 'Logging';
+  sModbus = 'Modbus';
 
 implementation
 

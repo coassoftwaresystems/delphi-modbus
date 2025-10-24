@@ -44,6 +44,8 @@ type
     const RawBuffer: TIdBytes) of object;
   TModbusClientReceiveBufferEvent = procedure(const RequestBuffer: TModBusRequestBuffer;
     const ResponseBuffer: TModBusResponseBuffer; const RawBuffer: TIdBytes) of object;
+  TModbusClientHeaderValidationEvent = procedure(const ReceivedSize: Integer;
+    const ExpectedSize: Integer; const RawBuffer: TIdBytes) of object;
 
 type
 {$I ModBusPlatforms.inc}
@@ -52,10 +54,12 @@ type
     FAutoConnect: Boolean;
     FBaseRegister: Word;
     FTransportMode: TModBusTransportMode;
+    FValidateHeader: TModBusHeaderValidation;
     FOnSendBuffer: TModbusClientSendBufferEvent;
     FOnReceiveBuffer: TModbusClientReceiveBufferEvent;
     FOnResponseError: TModbusClientErrorEvent;
     FOnResponseMismatch: TModBusClientResponseMismatchEvent;
+    FOnHeaderValidation: TModbusClientHeaderValidationEvent;
     FLastTransactionID: Word;
     FReadTimeout: Integer;
     FTimeOut: Cardinal;
@@ -83,6 +87,8 @@ type
       const ResponseBuffer: TModBusResponseBuffer); virtual;
     procedure DoResponseMismatch(const RequestFunctionCode: Byte; const ResponseFunctionCode: Byte;
       const ResponseBuffer: TModBusResponseBuffer); virtual;
+    procedure DoHeaderValidation(const ReceivedSize: Integer; const ExpectedSize: Integer;
+      const Buffer: TIdBytes); virtual;
     function ReadBits(const AModBusFunction: TModBusFunction; const RegNo, ABlockLength: Word;
       out RegisterData: array of Boolean): Boolean;
     procedure InitComponent; override;
@@ -125,19 +131,21 @@ type
     property TimeOut: Cardinal read FTimeOut write FTimeout default 15000;
     property TransportMode: TModBusTransportMode read FTransportMode write FTransportMode default tmTCP;
     property UnitID: Byte read FUnitID write FUnitID default MB_IGNORE_UNITID;
+    property ValidateHeader: TModBusHeaderValidation read FValidateHeader write FValidateHeader default hvDisabled;
     property Version: String read GetVersion write SetVersion stored False;
   { events }
     property OnSendBuffer: TModbusClientSendBufferEvent read FOnSendBuffer write FOnSendBuffer;
     property OnReceiveBuffer: TModbusClientReceiveBufferEvent read FOnReceiveBuffer write FOnReceiveBuffer;
     property OnResponseError: TModbusClientErrorEvent read FOnResponseError write FOnResponseError;
     property OnResponseMismatch: TModBusClientResponseMismatchEvent read FOnResponseMismatch write FOnResponseMismatch;
+    property OnHeaderValidation: TModbusClientHeaderValidationEvent read FOnHeaderValidation write FOnHeaderValidation;
   end;
 
 
 implementation
 
 uses
-  ModbusUtils, Math;
+  ModbusUtils, Math, ModbusStrConsts;
 
 
 { TIdModBusClient }
@@ -155,6 +163,7 @@ begin
   FAutoConnect := True;
   FBaseRegister := 1;
   FTransportMode := tmTCP;
+  FValidateHeader := hvDisabled;
   FLastTransactionID := 0;
   FReadTimeout := 0;
   FUnitID := MB_IGNORE_UNITID;
@@ -164,6 +173,7 @@ begin
   FOnReceiveBuffer := nil;
   FOnResponseError := nil;
   FOnResponseMismatch := nil;
+  FOnHeaderValidation := nil;
 end;
 
 
@@ -209,6 +219,13 @@ begin
     FOnResponseMismatch(RequestFunctionCode, ResponseFunctionCode, ResponseBuffer);
 end;
 
+
+procedure TIdModBusClient.DoHeaderValidation(const ReceivedSize: Integer; 
+  const ExpectedSize: Integer; const Buffer: TIdBytes);
+begin
+  if Assigned(FOnHeaderValidation) then
+    FOnHeaderValidation(ReceivedSize, ExpectedSize, Buffer);
+end;
 
 
 function TIdModBusClient.SendCommand(var ARequestBuffer: TModBusRequestBuffer;
@@ -269,7 +286,7 @@ begin
   else
   begin
     // TCP mode: send full buffer with TCP header
-    Buffer := RawToBytes(ARequestBuffer, Swap16(ARequestBuffer.TCPHeader.RecLength) + 6);
+    Buffer := RawToBytes(ARequestBuffer, Swap16(ARequestBuffer.TCPHeader.RecLength) + MB_TCP_HEADER_SIZE);
   end;
 
   IOHandler.WriteDirect(Buffer);
@@ -319,6 +336,35 @@ begin
   begin
     // TCP mode: parse normally with TCP header
     Move(ReceiveBuffer[0], ResponseBuffer, Min(iSize, Sizeof(ResponseBuffer)));
+    
+    // Validate MBAP header: check if RecLength matches received data
+    // RecLength field indicates number of bytes following it (excluding the TCP header)
+    if (FValidateHeader <> hvDisabled) then
+    begin
+      if (iSize >= SizeOf(TModBusTCPHeader)) then
+      begin
+        BufferSize := Swap16(ResponseBuffer.TCPHeader.RecLength);
+        // iSize should be RecLength + TCP header size
+        if (iSize <> BufferSize + MB_TCP_HEADER_SIZE) then
+        begin
+          DoHeaderValidation(iSize, BufferSize + MB_TCP_HEADER_SIZE, ReceiveBuffer);
+          if (FValidateHeader = hvException) then
+            raise EModbusHeaderValidation.CreateFmt(sHeaderValidationError, [iSize, BufferSize + MB_TCP_HEADER_SIZE]);
+          // hvIgnore: just return False without raising exception
+          Result := False;
+          Exit;
+        end;
+      end
+      else
+      begin
+        // Not enough data received for a valid MBAP header
+        DoHeaderValidation(iSize, SizeOf(TModBusTCPHeader), ReceiveBuffer);
+        if (FValidateHeader = hvException) then
+          raise EModbusHeaderValidation.CreateFmt(sHeaderValidationError, [iSize, SizeOf(TModBusTCPHeader)]);
+        Result := False;
+        Exit;
+      end;
+    end;
   end;
 
   DoReceiveBuffer(ARequestBuffer, ResponseBuffer, ReceiveBuffer);
