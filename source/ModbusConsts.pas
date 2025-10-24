@@ -1,6 +1,6 @@
 {===============================================================================
 
-Copyright (c) 2025 P.L. Polak
+Copyright (c) COAS software systems BV
 
 The MIT License (MIT)
 

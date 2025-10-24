@@ -1,6 +1,6 @@
 {===============================================================================
 
-Copyright (c) 2025 P.L. Polak
+Copyright (c) COAS software systems BV
 
 The MIT License (MIT)
 
@@ -63,6 +63,8 @@ type
     function GetVersion: String;
     procedure SetVersion(const Value: String);
     function GetNewTransactionID: Word;
+    procedure HandlePrivateCommandResponse(const ResponseBuffer: TModBusResponseBuffer;
+      out RegisterData: array of Word);
     procedure HandleReadBitsResponse(const ResponseBuffer: TModBusResponseBuffer;
       out RegisterData: array of Word);
     procedure HandleReadHoldingRegistersResponse(const ResponseBuffer: TModBusResponseBuffer;
@@ -104,7 +106,8 @@ type
     function ReadInputRegisters(const RegNo: Word; const Blocks: Word; var RegisterData: array of Word): Boolean;
     function ReadSingle(const RegNo: Word; out Value: Single): Boolean;
     function ReadString(const RegNo: Word; const ALength: Word): String;
-    function ReportSlaveID(const Blocks: Word; out RegisterData: array of Word):boolean;
+    function ReportSlaveID(const Blocks: Word; out RegisterData: array of Word): Boolean;
+    function SendPrivateCommand(const FunctionCode: TModBusFunction; const Data: TModBusDataBuffer): TModBusDataBuffer;
     function WriteCoil(const RegNo: Word; const Value: Boolean): Boolean;
     function WriteCoils(const RegNo: Word; const Blocks: Word; const RegisterData: array of Boolean): Boolean;
     function WriteRegister(const RegNo: Word; const Value: Word): Boolean;
@@ -314,6 +317,12 @@ begin
 end;
 
 
+procedure TIdModBusClient.HandlePrivateCommandResponse(const ResponseBuffer: TModBusResponseBuffer;
+  out RegisterData: array of Word);
+begin
+end;
+
+
 procedure TIdModBusClient.HandleReadBitsResponse(const ResponseBuffer: TModBusResponseBuffer;
   out RegisterData: array of Word);
 var
@@ -372,6 +381,35 @@ var
 begin
   Result := ReadHoldingRegisters(RegNo, 1, Data);
   Value := Data[0];
+end;
+
+
+function TIdModBusClient.SendPrivateCommand(const FunctionCode: TModBusFunction; const Data: TModBusDataBuffer): TModBusDataBuffer;
+var
+  bNewConnection: Boolean;
+  RequestBuffer: TModbusRequestBuffer;
+  RegisterData: array of Word;
+begin
+  bNewConnection := False;
+  if FAutoConnect and not Connected then
+  begin
+    Connect;
+    bNewConnection := True;
+  end;
+
+  try
+    RequestBuffer := BuildRequestBuffer(FunctionCode, 0);
+    Move(Data, RequestBuffer.MBPData, SizeOf(RequestBuffer.MBPData));
+    SetLength(RegisterData, SizeOf(Data));
+    FillChar(RegisterData, SizeOf(Data), 0);
+    if (SendCommandToSocket(RequestBuffer, RegisterData, HandlePrivateCommandResponse)) then
+      Move(RegisterData[0], Result, SizeOf(Result))
+    else
+      FillChar(Result, SizeOf(Result), 0);
+  finally
+    if bNewConnection then
+      DisConnect;
+  end;
 end;
 
 
