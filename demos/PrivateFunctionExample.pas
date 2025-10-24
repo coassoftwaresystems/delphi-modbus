@@ -94,6 +94,7 @@ begin
   case FunctionCode of
     $41: // Custom device identification
       begin
+        // Note: The Modbus library ensures RequestBuffer contains valid received data
         // Get command byte from request
         Command := RequestBuffer.MBPData[0];
         
@@ -124,6 +125,7 @@ begin
       
     $42: // Custom data read
       begin
+        // Note: The Modbus library ensures RequestBuffer contains valid received data
         // Example: Read custom data based on address in request
         Command := RequestBuffer.MBPData[0]; // Data address
         ResponseData[0] := Command;           // Echo address
