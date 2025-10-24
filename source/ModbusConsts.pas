@@ -35,7 +35,7 @@ const
   MB_PORT = 502;
   MB_IGNORE_UNITID = 255;
   MB_PROTOCOL = 0;
-  MB_TCP_HEADER_SIZE = 6; // Size of Modbus TCP header (Transaction ID + Protocol ID + Length)
+  MB_TCP_HEADER_SIZE = 6; // Size of Modbus TCP/IP header (TransactionID + ProtocolID + RecLength)
 
 // Define constants for the ModBus functions
 const
