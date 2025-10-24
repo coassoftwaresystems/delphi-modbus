@@ -269,7 +269,7 @@ begin
   else
   begin
     // TCP mode: send full buffer with TCP header
-    Buffer := RawToBytes(ARequestBuffer, Swap16(ARequestBuffer.TCPHeader.RecLength) + 6);
+    Buffer := RawToBytes(ARequestBuffer, Swap16(ARequestBuffer.TCPHeader.RecLength) + MB_TCP_HEADER_SIZE);
   end;
 
   IOHandler.WriteDirect(Buffer);
@@ -321,12 +321,12 @@ begin
     Move(ReceiveBuffer[0], ResponseBuffer, Min(iSize, Sizeof(ResponseBuffer)));
     
     // Validate MBAP header: check if RecLength matches received data
-    // RecLength field indicates number of bytes following it (excluding the 6-byte TCP header)
+    // RecLength field indicates number of bytes following it (excluding the TCP header)
     if (iSize >= SizeOf(TModBusTCPHeader)) then
     begin
       BufferSize := Swap16(ResponseBuffer.TCPHeader.RecLength);
-      // iSize should be RecLength + 6 (size of TCP header)
-      if (iSize <> BufferSize + 6) then
+      // iSize should be RecLength + TCP header size
+      if (iSize <> BufferSize + MB_TCP_HEADER_SIZE) then
       begin
         Result := False;
         Exit;

@@ -363,10 +363,10 @@ begin
         Move(Buffer[0], ReceiveBuffer, Min(iCount, SizeOf(ReceiveBuffer)));
         
         // Validate MBAP header: check if RecLength matches received data
-        // RecLength field indicates number of bytes following it (excluding the 6-byte TCP header)
+        // RecLength field indicates number of bytes following it (excluding the TCP header)
         if (iCount >= SizeOf(TModBusTCPHeader)) then
         begin
-          if (iCount <> Swap16(ReceiveBuffer.TCPHeader.RecLength) + 6) then
+          if (iCount <> Swap16(ReceiveBuffer.TCPHeader.RecLength) + MB_TCP_HEADER_SIZE) then
             Exit; // Length mismatch, ignore the request
         end
         else
@@ -739,11 +739,11 @@ begin
       else
       begin
         // TCP mode: send with TCP header
-        Buffer := RawToBytes(SendBuffer, Swap16(SendBuffer.TCPHeader.RecLength) + 6);
+        Buffer := RawToBytes(SendBuffer, Swap16(SendBuffer.TCPHeader.RecLength) + MB_TCP_HEADER_SIZE);
       end;
       AContext.Connection.Socket.WriteDirect(Buffer);
       if FLogEnabled then
-        LogResponseBuffer(AContext, SendBuffer, Swap16(SendBuffer.TCPHeader.RecLength) + 6);
+        LogResponseBuffer(AContext, SendBuffer, Swap16(SendBuffer.TCPHeader.RecLength) + MB_TCP_HEADER_SIZE);
     end
     else
     begin
