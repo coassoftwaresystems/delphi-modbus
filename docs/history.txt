@@ -7,6 +7,7 @@ Version 2.0.0
 - Added new property 'IncludeCrc' to TIdModbusClient, which appends CRC value at the end of the request.
 - Added new events in TIdModbusClient to log data in Send- and Receive buffers.
 - Added support for use of RTU over TCP/IP.
+- Added support for sending private Modbus commands.
 - Added option to match received buffer against buffer length in Modbus header.
 - Fix: IdModbusClient - prevent writing data beyond the size of the response buffer.
 - Fix: IdModbusClient - clear the input buffer before sending a new request.

@@ -614,7 +614,7 @@ begin
         end;
     else
       // Check if this is a private/user-defined function code
-      if IsValidPrivateFunctionCode(ReceiveBuffer.FunctionCode) then
+      if IsValidPrivateFunctionCode(ReceiveBuffer.FunctionCode) and Assigned(FOnPrivateFunction) then
       begin
         // Handle private function
         ErrorCode := mbeOk;

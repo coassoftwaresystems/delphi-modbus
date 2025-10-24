@@ -680,25 +680,25 @@ procedure TIdModbusClient.HandlePrivateFunctionResponse(const ResponseBuffer: TM
   out RegisterData: array of Word);
 var
   i: Integer;
-  DataSize: Integer;
-  ByteIndex: Integer;
+  iDataSize: Integer;
+  iIndex: Integer;
 begin
   // Extract byte data from response and pack into Word array
   // Each Word can hold 2 bytes (low byte and high byte)
-  DataSize := Swap16(ResponseBuffer.TCPHeader.RecLength) - 2; // Subtract UnitID + FunctionCode
-  
+  iDataSize := Swap16(ResponseBuffer.TCPHeader.RecLength) - 2; // Subtract UnitID + FunctionCode
+
   // Pack bytes into words: 2 bytes per word
-  ByteIndex := 0;
+  iIndex := 0;
   for i := 0 to High(RegisterData) do
   begin
-    if ByteIndex < DataSize then
+    if (iIndex < iDataSize) then
     begin
-      RegisterData[i] := ResponseBuffer.MBPData[ByteIndex];
-      Inc(ByteIndex);
-      if ByteIndex < DataSize then
+      RegisterData[i] := ResponseBuffer.MBPData[iIndex];
+      Inc(iIndex);
+      if (iIndex < iDataSize) then
       begin
-        RegisterData[i] := RegisterData[i] or (Word(ResponseBuffer.MBPData[ByteIndex]) shl 8);
-        Inc(ByteIndex);
+        RegisterData[i] := RegisterData[i] or (Word(ResponseBuffer.MBPData[iIndex]) shl 8);
+        Inc(iIndex);
       end;
     end
     else
@@ -1024,15 +1024,13 @@ function TIdModBusClient.SendPrivateFunction(const FunctionCode: Byte; const Req
   out ResponseData: array of Byte): Boolean;
 var
   RequestBuffer: TModBusRequestBuffer;
-  DataSize: Integer;
+  iDataSize: Integer;
   bNewConnection: Boolean;
-  ResponseWords: array of Word;
   i: Integer;
-  ByteIndex: Integer;
-  MaxResponseBytes: Integer;
+  iIndex: Integer;
+  iMaxResponseBytes: Integer;
+  ResponseWords: array of Word;
 begin
-  Result := False;
-  
   // Validate function code is in the private/user-defined range
   if not IsValidPrivateFunctionCode(FunctionCode) then
     raise EModbusInvalidPrivateFunction.CreateFmt('Invalid private function code: $%x. Must be $41..$48 or $64..$6E', [FunctionCode]);
@@ -1049,39 +1047,39 @@ begin
     RequestBuffer := BuildRequestBuffer(FunctionCode, 0);
     
     // Copy request data to buffer
-    DataSize := Length(RequestData);
-    if DataSize > 0 then
+    iDataSize := Length(RequestData);
+    if (iDataSize > 0) then
     begin
-      if DataSize > SizeOf(RequestBuffer.MBPData) then
-        DataSize := SizeOf(RequestBuffer.MBPData);
-      Move(RequestData[0], RequestBuffer.MBPData[0], DataSize);
+      if (iDataSize > SizeOf(RequestBuffer.MBPData)) then
+        iDataSize := SizeOf(RequestBuffer.MBPData);
+      Move(RequestData[0], RequestBuffer.MBPData[0], iDataSize);
     end;
     
     // Set record length for TCP mode
-    RequestBuffer.TCPHeader.RecLength := Swap16(2 + DataSize); // UnitID + FunctionCode + Data
+    RequestBuffer.TCPHeader.RecLength := Swap16(2 + iDataSize); // UnitID + FunctionCode + Data
     
     // Allocate Word array to receive response (2 bytes per word, round up)
-    MaxResponseBytes := Length(ResponseData);
-    SetLength(ResponseWords, (MaxResponseBytes + 1) div 2);
-    
+    iMaxResponseBytes := Length(ResponseData);
+    SetLength(ResponseWords, (iMaxResponseBytes + 1) div 2);
+
     // Use SendCommandToSocket to handle all the communication
     Result := SendCommandToSocket(RequestBuffer, ResponseWords, HandlePrivateFunctionResponse);
     
     // Unpack response data from Word array to Byte array
-    if Result and (Length(ResponseData) > 0) then
+    if Result and (Length(ResponseWords) > 0) then
     begin
-      ByteIndex := 0;
+      iIndex := 0;
       for i := 0 to High(ResponseWords) do
       begin
-        if ByteIndex < Length(ResponseData) then
+        if (iIndex < Length(ResponseData)) then
         begin
-          ResponseData[ByteIndex] := Lo(ResponseWords[i]);
-          Inc(ByteIndex);
+          ResponseData[iIndex] := Lo(ResponseWords[i]);
+          Inc(iIndex);
         end;
-        if ByteIndex < Length(ResponseData) then
+        if (iIndex < Length(ResponseData)) then
         begin
-          ResponseData[ByteIndex] := Hi(ResponseWords[i]);
-          Inc(ByteIndex);
+          ResponseData[iIndex] := Hi(ResponseWords[i]);
+          Inc(iIndex);
         end;
       end;
     end;
