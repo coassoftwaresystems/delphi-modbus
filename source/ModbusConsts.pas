@@ -81,6 +81,13 @@ const
   mbObjIDExtendedObjectStart = $80;
   mbObjIDExtendedObjectEnd = $FF;
 
+// Define constants for private/user-defined function codes
+const
+  mbfPrivateMin1 = $41;  // 65 decimal
+  mbfPrivateMax1 = $48;  // 72 decimal
+  mbfPrivateMin2 = $64;  // 100 decimal
+  mbfPrivateMax2 = $6E;  // 110 decimal
+
 // Define constants for the ModBus exceptions
 const
   mbeOk = $00;

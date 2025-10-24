@@ -31,8 +31,7 @@ unit AboutComponentEditor;
 interface
 
 uses
-  DesignIntf
- ,DesignEditors;
+  DesignIntf, DesignEditors;
 
 type
   TAboutComponentEditor = class(TDefaultEditor)
@@ -55,9 +54,7 @@ type
 implementation
 
 uses
-  frm_About
- ,SysUtils
- ,ModbusConsts;
+  frm_About, SysUtils, ModbusConsts;
 
 
 procedure ShowAboutDialog;

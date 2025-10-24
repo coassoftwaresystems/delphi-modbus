@@ -23,7 +23,10 @@ A listing of implementations using the components is available in the [wiki](htt
 - Function Code 17 (0x11): Report Slave ID
 - Function Code 22 (0x16): Write Masked Register
 - Function Code 43 (0x2B): Read Device Identification (MEI Type 14)
+- **Function Codes 65-72 (0x41-0x48)**: Private/User-Defined Functions
+- **Function Codes 100-110 (0x64-0x6E)**: Private/User-Defined Functions
 
 ### Documentation
 - [Read Device Identification](docs/ReadDeviceIdentification.md) - Guide for Function Code 43
 - [RTU over TCP](docs/RTU_over_TCP.md) - RTU transport mode documentation
+- [Private Functions](docs/PrivateFunctions.md) - Guide for using private/user-defined function codes

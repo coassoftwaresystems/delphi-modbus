@@ -102,6 +102,7 @@ begin
   RegisterPropertyInCategory(sModbus, TIdModbusServer, 'OnReadInputRegisters');
   RegisterPropertyInCategory(sModbus, TIdModbusServer, 'OnWriteCoils');
   RegisterPropertyInCategory(sModbus, TIdModbusServer, 'OnWriteRegisters');
+  RegisterPropertyInCategory(sModbus, TIdModbusServer, 'OnPrivateFunction');
 
   RegisterIDEPlugins;
 {$ENDIF}

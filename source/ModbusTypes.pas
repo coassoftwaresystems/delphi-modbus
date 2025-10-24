@@ -83,15 +83,17 @@ type
   end;
 
 type
-  EModbusHeaderValidation = class(Exception);
-
-type
   TModDeviceIdentificationObject = record
     ObjectID: Byte;
     ObjectValue: String;
   end;
-  
+
+type
   TModDeviceIdentificationData = array of TModDeviceIdentificationObject;
+
+type
+  EModbusHeaderValidation = class(Exception);
+  EModbusInvalidPrivateFunction = class(Exception);
 
 
 implementation

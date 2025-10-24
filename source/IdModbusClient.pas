@@ -77,6 +77,8 @@ type
       out RegisterData: array of Word);
     procedure HandleReadDeviceIdentificationResponse(const ResponseBuffer: TModBusResponseBuffer;
       out RegisterData: array of Word);
+    procedure HandlePrivateFunctionResponse(const ResponseBuffer: TModBusResponseBuffer;
+      out RegisterData: array of Word);
   protected
     function BuildRequestBuffer(const AModBusFunction: TModBusFunction;
       const ARegNumber: Word): TModBusRequestBuffer; virtual;
@@ -124,6 +126,8 @@ type
     function WriteDWord(const RegNo: Word; const Value: DWord): Boolean;
     function WriteSingle(const RegNo: Word; const Value: Single): Boolean;
     function WriteString(const RegNo: Word; const Text: String): Boolean;
+    function SendPrivateFunction(const FunctionCode: Byte; const RequestData: array of Byte;
+      out ResponseData: array of Byte): Boolean;
   published
     property AutoConnect: Boolean read FAutoConnect write FAutoConnect default True;
     property BaseRegister: Word read FBaseRegister write FBaseRegister default 1;
@@ -672,6 +676,37 @@ begin
 end;
 
 
+procedure TIdModbusClient.HandlePrivateFunctionResponse(const ResponseBuffer: TModBusResponseBuffer;
+  out RegisterData: array of Word);
+var
+  i: Integer;
+  iDataSize: Integer;
+  iIndex: Integer;
+begin
+  // Extract byte data from response and pack into Word array
+  // Each Word can hold 2 bytes (low byte and high byte)
+  iDataSize := Swap16(ResponseBuffer.TCPHeader.RecLength) - 2; // Subtract UnitID + FunctionCode
+
+  // Pack bytes into words: 2 bytes per word
+  iIndex := 0;
+  for i := 0 to High(RegisterData) do
+  begin
+    if (iIndex < iDataSize) then
+    begin
+      RegisterData[i] := ResponseBuffer.MBPData[iIndex];
+      Inc(iIndex);
+      if (iIndex < iDataSize) then
+      begin
+        RegisterData[i] := RegisterData[i] or (Word(ResponseBuffer.MBPData[iIndex]) shl 8);
+        Inc(iIndex);
+      end;
+    end
+    else
+      Break;
+  end;
+end;
+
+
 function TIdModbusClient.ReadDeviceIdentification(const ReadDeviceIDCode: Byte; 
   const ObjectID: Byte; out DeviceIDData: TModDeviceIdentificationData): Boolean;
 var
@@ -978,6 +1013,76 @@ begin
     PutCoilsIntoBuffer(@RequestBuffer.MBPData[5], wBlockLength, Data);
     RequestBuffer.TCPHeader.RecLength := Swap16(7 + RequestBuffer.MBPData[4]);
     Result := SendCommandToSocket(RequestBuffer, Data);
+  finally
+    if bNewConnection then
+      DisConnect;
+  end;
+end;
+
+
+function TIdModBusClient.SendPrivateFunction(const FunctionCode: Byte; const RequestData: array of Byte;
+  out ResponseData: array of Byte): Boolean;
+var
+  RequestBuffer: TModBusRequestBuffer;
+  iDataSize: Integer;
+  bNewConnection: Boolean;
+  i: Integer;
+  iIndex: Integer;
+  iMaxResponseBytes: Integer;
+  ResponseWords: array of Word;
+begin
+  // Validate function code is in the private/user-defined range
+  if not IsValidPrivateFunctionCode(FunctionCode) then
+    raise EModbusInvalidPrivateFunction.CreateFmt('Invalid private function code: $%x. Must be $41..$48 or $64..$6E', [FunctionCode]);
+
+  bNewConnection := False;
+  if FAutoConnect and not Connected then
+  begin
+    Connect;
+    bNewConnection := True;
+  end;
+
+  try
+    // Build request buffer
+    RequestBuffer := BuildRequestBuffer(FunctionCode, 0);
+    
+    // Copy request data to buffer
+    iDataSize := Length(RequestData);
+    if (iDataSize > 0) then
+    begin
+      if (iDataSize > SizeOf(RequestBuffer.MBPData)) then
+        iDataSize := SizeOf(RequestBuffer.MBPData);
+      Move(RequestData[0], RequestBuffer.MBPData[0], iDataSize);
+    end;
+    
+    // Set record length for TCP mode
+    RequestBuffer.TCPHeader.RecLength := Swap16(2 + iDataSize); // UnitID + FunctionCode + Data
+    
+    // Allocate Word array to receive response (2 bytes per word, round up)
+    iMaxResponseBytes := Length(ResponseData);
+    SetLength(ResponseWords, (iMaxResponseBytes + 1) div 2);
+
+    // Use SendCommandToSocket to handle all the communication
+    Result := SendCommandToSocket(RequestBuffer, ResponseWords, HandlePrivateFunctionResponse);
+    
+    // Unpack response data from Word array to Byte array
+    if Result and (Length(ResponseWords) > 0) then
+    begin
+      iIndex := 0;
+      for i := 0 to High(ResponseWords) do
+      begin
+        if (iIndex < Length(ResponseData)) then
+        begin
+          ResponseData[iIndex] := Lo(ResponseWords[i]);
+          Inc(iIndex);
+        end;
+        if (iIndex < Length(ResponseData)) then
+        begin
+          ResponseData[iIndex] := Hi(ResponseWords[i]);
+          Inc(iIndex);
+        end;
+      end;
+    end;
   finally
     if bNewConnection then
       DisConnect;
