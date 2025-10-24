@@ -52,6 +52,7 @@ type
     FAutoConnect: Boolean;
     FBaseRegister: Word;
     FTransportMode: TModBusTransportMode;
+    FValidateHeader: TModBusHeaderValidation;
     FOnSendBuffer: TModbusClientSendBufferEvent;
     FOnReceiveBuffer: TModbusClientReceiveBufferEvent;
     FOnResponseError: TModbusClientErrorEvent;
@@ -125,6 +126,7 @@ type
     property TimeOut: Cardinal read FTimeOut write FTimeout default 15000;
     property TransportMode: TModBusTransportMode read FTransportMode write FTransportMode default tmTCP;
     property UnitID: Byte read FUnitID write FUnitID default MB_IGNORE_UNITID;
+    property ValidateHeader: TModBusHeaderValidation read FValidateHeader write FValidateHeader default hvException;
     property Version: String read GetVersion write SetVersion stored False;
   { events }
     property OnSendBuffer: TModbusClientSendBufferEvent read FOnSendBuffer write FOnSendBuffer;
@@ -137,7 +139,7 @@ type
 implementation
 
 uses
-  ModbusUtils, Math;
+  ModbusUtils, Math, ModbusStrConsts;
 
 
 { TIdModBusClient }
@@ -155,6 +157,7 @@ begin
   FAutoConnect := True;
   FBaseRegister := 1;
   FTransportMode := tmTCP;
+  FValidateHeader := hvException;
   FLastTransactionID := 0;
   FReadTimeout := 0;
   FUnitID := MB_IGNORE_UNITID;
@@ -322,21 +325,29 @@ begin
     
     // Validate MBAP header: check if RecLength matches received data
     // RecLength field indicates number of bytes following it (excluding the TCP header)
-    if (iSize >= SizeOf(TModBusTCPHeader)) then
+    if (FValidateHeader <> hvDisabled) then
     begin
-      BufferSize := Swap16(ResponseBuffer.TCPHeader.RecLength);
-      // iSize should be RecLength + TCP header size
-      if (iSize <> BufferSize + MB_TCP_HEADER_SIZE) then
+      if (iSize >= SizeOf(TModBusTCPHeader)) then
       begin
+        BufferSize := Swap16(ResponseBuffer.TCPHeader.RecLength);
+        // iSize should be RecLength + TCP header size
+        if (iSize <> BufferSize + MB_TCP_HEADER_SIZE) then
+        begin
+          if (FValidateHeader = hvException) then
+            raise EModbusHeaderValidation.CreateFmt(sHeaderValidationError, [iSize, BufferSize + MB_TCP_HEADER_SIZE]);
+          // hvIgnore: just return False without raising exception
+          Result := False;
+          Exit;
+        end;
+      end
+      else
+      begin
+        // Not enough data received for a valid MBAP header
+        if (FValidateHeader = hvException) then
+          raise EModbusHeaderValidation.CreateFmt(sHeaderValidationError, [iSize, SizeOf(TModBusTCPHeader)]);
         Result := False;
         Exit;
       end;
-    end
-    else
-    begin
-      // Not enough data received for a valid MBAP header
-      Result := False;
-      Exit;
     end;
   end;
 

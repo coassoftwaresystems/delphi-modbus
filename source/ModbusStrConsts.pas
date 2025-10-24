@@ -34,6 +34,7 @@ interface
 resourcestring
   sModbus = 'Modbus';
   sLogging = 'Logging';
+  sHeaderValidationError = 'Modbus header validation failed: received %d bytes, expected %d bytes';
 
 implementation
 

@@ -38,6 +38,9 @@ type
   TModBusTransportMode = (tmTCP, tmRTU);
 
 type
+  TModBusHeaderValidation = (hvDisabled, hvException, hvIgnore);
+
+type
   TModBusDataBuffer = array[0..260] of Byte;
 
 type
@@ -75,6 +78,9 @@ type
     ExceptionFunction: TModBusFunction;
     ExceptionCode: Byte;
   end;
+
+type
+  EModbusHeaderValidation = class(Exception);
 
 
 implementation
