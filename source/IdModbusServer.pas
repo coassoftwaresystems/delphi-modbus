@@ -345,7 +345,7 @@ begin
     begin
       if (FTransportMode = tmRTU) then
       begin
-        // Validate CRC for RTU mode
+        // RTU mode: validate CRC and parse without TCP header
         if (iCount >= 2) then
         begin
           if (CalculateCRC16(Copy(Buffer, 0, iCount - 2)) <> Word((Buffer[iCount - 1] shl 8) or Buffer[iCount - 2])) then
@@ -353,8 +353,15 @@ begin
         end
         else
           Exit; // Not enough data for CRC
+        // Copy without TCP header - start from Header (UnitID)
+        FillChar(ReceiveBuffer, SizeOf(ReceiveBuffer), 0);
+        Move(Buffer[0], ReceiveBuffer.Header, Min(iCount, SizeOf(ReceiveBuffer) - SizeOf(ReceiveBuffer.TCPHeader)));
+      end
+      else
+      begin
+        // TCP mode: parse normally with TCP header
+        Move(Buffer[0], ReceiveBuffer, Min(iCount, SizeOf(ReceiveBuffer)));
       end;
-      Move(Buffer[0], ReceiveBuffer, Min(iCount, SizeOf(ReceiveBuffer)));
       if FLogEnabled then
         LogRequestBuffer(AContext, ReceiveBuffer, iCount);
     end
@@ -364,14 +371,27 @@ begin
   else
     Exit;
 { Process the data }
-  if ((FUnitID <> MB_IGNORE_UNITID) and (ReceiveBuffer.Header.UnitID <> FUnitID)) or
-     (ReceiveBuffer.Header.ProtocolID <> MB_PROTOCOL)
-  then
+  if (FTransportMode = tmTCP) then
   begin
-  // When listening for a specific UnitID, only except data for that ID
-    SendError(AContext, mbeServerFailure, ReceiveBuffer);
+    if ((FUnitID <> MB_IGNORE_UNITID) and (ReceiveBuffer.Header.UnitID <> FUnitID)) or
+       (ReceiveBuffer.TCPHeader.ProtocolID <> MB_PROTOCOL)
+    then
+    begin
+    // When listening for a specific UnitID, only except data for that ID
+      SendError(AContext, mbeServerFailure, ReceiveBuffer);
+      Exit;
+    end;
   end
-  else if ((Byte(ReceiveBuffer.FunctionCode) and $80) <> 0) then
+  else
+  begin
+    // RTU mode: only check UnitID
+    if ((FUnitID <> MB_IGNORE_UNITID) and (ReceiveBuffer.Header.UnitID <> FUnitID)) then
+    begin
+      Exit; // Ignore requests not for this unit
+    end;
+  end;
+  
+  if ((Byte(ReceiveBuffer.FunctionCode) and $80) <> 0) then
   begin
     ErrorCode := Integer(ReceiveBuffer.MBPData[0]);
     DoError(AContext, ReceiveBuffer.FunctionCode and not $80, ErrorCode, ReceiveBuffer);
@@ -597,17 +617,21 @@ var
   SendBuffer: TModBusExceptionBuffer;
   Buffer: TIdBytes;
   Crc: Word;
+  BufferSize: Integer;
 begin
   if Active then
   begin
+    SendBuffer.TCPHeader := ReceiveBuffer.TCPHeader;
     SendBuffer.Header := ReceiveBuffer.Header;
     SendBuffer.ExceptionFunction := ReceiveBuffer.FunctionCode or $80;
     SendBuffer.ExceptionCode := ErrorCode;
-    SendBuffer.Header.RecLength := Swap16(3);
+    SendBuffer.TCPHeader.RecLength := Swap16(3);
 
-    Buffer := RawToBytes(SendBuffer, SizeOf(SendBuffer));
     if (FTransportMode = tmRTU) then
     begin
+      // RTU mode: send without TCP header
+      BufferSize := 1 + 1 + 1; // UnitID + ExceptionFunction + ExceptionCode
+      Buffer := RawToBytes(SendBuffer.Header, BufferSize);
       Crc := CalculateCRC16(Buffer);
     {$IFDEF DMB_DELPHIXE3}
       SetLength(Buffer, IndyLength(Buffer) + 2);
@@ -616,6 +640,11 @@ begin
     {$ENDIF}
       Buffer[High(Buffer) - 1] := Lo(Crc);
       Buffer[High(Buffer)] := Hi(Crc);
+    end
+    else
+    begin
+      // TCP mode: send with TCP header
+      Buffer := RawToBytes(SendBuffer, SizeOf(SendBuffer));
     end;
     AContext.Connection.Socket.WriteDirect(Buffer);
     if FLogEnabled then
@@ -632,17 +661,18 @@ var
   ValidRequest : Boolean;
   Buffer: TIdBytes;
   Crc: Word;
+  BufferSize: Integer;
 begin
   if Active then
   begin
     { Check Valid }
     ValidRequest  := false;
     FillChar(SendBuffer, SizeOf(SendBuffer), 0);
-    SendBuffer.Header.TransactionID := ReceiveBuffer.Header.TransactionID;
-    SendBuffer.Header.ProtocolID := ReceiveBuffer.Header.ProtocolID;
+    SendBuffer.TCPHeader.TransactionID := ReceiveBuffer.TCPHeader.TransactionID;
+    SendBuffer.TCPHeader.ProtocolID := ReceiveBuffer.TCPHeader.ProtocolID;
     SendBuffer.Header.UnitID := ReceiveBuffer.Header.UnitID;
     SendBuffer.FunctionCode := ReceiveBuffer.FunctionCode;
-    SendBuffer.Header.RecLength := Swap16(0);
+    SendBuffer.TCPHeader.RecLength := Swap16(0);
 
     case ReceiveBuffer.FunctionCode of
       mbfReadCoils,
@@ -653,7 +683,7 @@ begin
           begin
             SendBuffer.MBPData[0] := Byte((L + 7) div 8);
             PutCoilsIntoBuffer(@SendBuffer.MBPData[1], L, Data);
-            SendBuffer.Header.RecLength := Swap16(3 + SendBuffer.MBPData[0]);
+            SendBuffer.TCPHeader.RecLength := Swap16(3 + SendBuffer.MBPData[0]);
             ValidRequest  := true;
           end;
         end;
@@ -665,7 +695,7 @@ begin
           begin
             SendBuffer.MBPData[0] := Byte(L shl 1);
             PutRegistersIntoBuffer(@SendBuffer.MBPData[1], L, Data);
-            SendBuffer.Header.RecLength := Swap16(3 + SendBuffer.MBPData[0]);
+            SendBuffer.TCPHeader.RecLength := Swap16(3 + SendBuffer.MBPData[0]);
             ValidRequest  := true;
           end;
         end;
@@ -675,16 +705,18 @@ begin
         SendBuffer.MBPData[1] := ReceiveBuffer.MBPData[1];
         SendBuffer.MBPData[2] := ReceiveBuffer.MBPData[2];
         SendBuffer.MBPData[3] := ReceiveBuffer.MBPData[3];
-        SendBuffer.Header.RecLength := Swap16(6);
+        SendBuffer.TCPHeader.RecLength := Swap16(6);
         ValidRequest  := true;
       end;
     end;
     { Send buffer if Request is Valid }
     if ValidRequest then
     begin
-      Buffer := RawToBytes(SendBuffer, Swap16(SendBuffer.Header.RecLength) + 6);
       if (FTransportMode = tmRTU) then
       begin
+        // RTU mode: send without TCP header
+        BufferSize := Swap16(SendBuffer.TCPHeader.RecLength) + 1; // RecLength + UnitID
+        Buffer := RawToBytes(SendBuffer.Header, BufferSize);
         Crc := CalculateCRC16(Buffer);
       {$IFDEF DMB_DELPHIXE3}
         SetLength(Buffer, IndyLength(Buffer) + 2);
@@ -693,10 +725,15 @@ begin
       {$ENDIF}
         Buffer[High(Buffer) - 1] := Lo(Crc);
         Buffer[High(Buffer)] := Hi(Crc);
+      end
+      else
+      begin
+        // TCP mode: send with TCP header
+        Buffer := RawToBytes(SendBuffer, Swap16(SendBuffer.TCPHeader.RecLength) + 6);
       end;
       AContext.Connection.Socket.WriteDirect(Buffer);
       if FLogEnabled then
-        LogResponseBuffer(AContext, SendBuffer, Swap16(SendBuffer.Header.RecLength) + 6);
+        LogResponseBuffer(AContext, SendBuffer, Swap16(SendBuffer.TCPHeader.RecLength) + 6);
     end
     else
     begin

@@ -41,15 +41,20 @@ type
   TModBusDataBuffer = array[0..260] of Byte;
 
 type
-  TModBusHeader = packed record
+  TModBusTCPHeader = packed record
     TransactionID: Word;
     ProtocolID: Word;
     RecLength: Word;
+  end;
+
+type
+  TModBusHeader = packed record
     UnitID: Byte;
   end;
 
 type
   TModBusRequestBuffer = packed record
+    TCPHeader: TModBusTCPHeader;
     Header: TModBusHeader;
     FunctionCode: TModBusFunction;
     MBPData: TModBusDataBuffer;
@@ -57,6 +62,7 @@ type
 
 type
   TModBusResponseBuffer = packed record
+    TCPHeader: TModBusTCPHeader;
     Header: TModBusHeader;
     FunctionCode: TModBusFunction;
     MBPData: TModBusDataBuffer;
@@ -64,6 +70,7 @@ type
 
 type
   TModBusExceptionBuffer = packed record
+    TCPHeader: TModBusTCPHeader;
     Header: TModBusHeader;
     ExceptionFunction: TModBusFunction;
     ExceptionCode: Byte;

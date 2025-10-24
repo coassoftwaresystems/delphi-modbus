@@ -170,8 +170,8 @@ end;
 function TIdModBusClient.BuildRequestBuffer(const AModBusFunction: TModBusFunction;
   const ARegNumber: Word): TModBusRequestBuffer;
 begin
-  Result.Header.TransactionID := GetNewTransactionID;
-  Result.Header.ProtocolID := MB_PROTOCOL;
+  Result.TCPHeader.TransactionID := GetNewTransactionID;
+  Result.TCPHeader.ProtocolID := MB_PROTOCOL;
   Result.FunctionCode := Byte(AModBusFunction);
   Result.Header.UnitID := FUnitID;
   Result.MBPData[0] := Hi(ARegNumber);
@@ -228,7 +228,7 @@ begin
       { Initialise the data part }
         ARequestBuffer.MBPData[2] := Hi(BlockLength);
         ARequestBuffer.MBPData[3] := Lo(BlockLength);
-        ARequestBuffer.Header.RecLength := Swap16(6); { This includes UnitID/FuntionCode }
+        ARequestBuffer.TCPHeader.RecLength := Swap16(6); { This includes UnitID/FuntionCode }
       end;
   end;
 
@@ -245,15 +245,18 @@ var
   iSize: Integer;
   ReceiveBuffer: TIdBytes;
   ResponseBuffer: TModBusResponseBuffer;
+  BufferSize: Integer;
 begin
   CheckForGracefulDisconnect(True);
 { Clear input buffer to prevent reading possible data left from previous request }
   if Connected then
     IOHandler.InputBuffer.Clear;
 { Writeout the data to the connection }
-  Buffer := RawToBytes(ARequestBuffer, Swap16(ARequestBuffer.Header.RecLength) + 6);
   if (FTransportMode = tmRTU) then
   begin
+    // RTU mode: skip TCP header, send UnitID + FunctionCode + Data + CRC
+    BufferSize := 1 + 1 + SizeOf(ARequestBuffer.MBPData); // UnitID + FunctionCode + Data
+    Buffer := RawToBytes(ARequestBuffer.Header, BufferSize);
     Crc := CalculateCRC16(Buffer);
   {$IFDEF DMB_DELPHIXE3}
     SetLength(Buffer, IndyLength(Buffer) + 2);
@@ -262,6 +265,11 @@ begin
   {$ENDIF}
     Buffer[High(Buffer) - 1] := Lo(Crc);
     Buffer[High(Buffer)] := Hi(Crc);
+  end
+  else
+  begin
+    // TCP mode: send full buffer with TCP header
+    Buffer := RawToBytes(ARequestBuffer, Swap16(ARequestBuffer.TCPHeader.RecLength) + 6);
   end;
 
   IOHandler.WriteDirect(Buffer);
@@ -285,12 +293,10 @@ begin
   Result := True;
   iSize := IOHandler.InputBuffer.Size;
   IOHandler.ReadBytes(ReceiveBuffer, iSize);
-  // prevent writing data beyond the size of the ResponseBuffer
-  Move(ReceiveBuffer[0], ResponseBuffer, Min(iSize, Sizeof(ResponseBuffer)));
 
   if (FTransportMode = tmRTU) then
   begin
-    // Validate CRC for RTU mode
+    // RTU mode: validate CRC and parse without TCP header
     if (iSize >= 2) then
     begin
       Crc := CalculateCRC16(Copy(ReceiveBuffer, 0, iSize - 2));
@@ -305,6 +311,14 @@ begin
       Result := False;
       Exit;
     end;
+    // Copy response without TCP header
+    FillChar(ResponseBuffer, SizeOf(ResponseBuffer), 0);
+    Move(ReceiveBuffer[0], ResponseBuffer.Header, Min(iSize, SizeOf(ResponseBuffer) - SizeOf(ResponseBuffer.TCPHeader)));
+  end
+  else
+  begin
+    // TCP mode: parse normally with TCP header
+    Move(ReceiveBuffer[0], ResponseBuffer, Min(iSize, Sizeof(ResponseBuffer)));
   end;
 
   DoReceiveBuffer(ARequestBuffer, ResponseBuffer, ReceiveBuffer);
@@ -382,7 +396,7 @@ begin
   { Initialise the data part }
     RequestBuffer.MBPData[2] := Hi(wBlockLength);
     RequestBuffer.MBPData[3] := Lo(wBlockLength);
-    RequestBuffer.Header.RecLength := Swap16(6); { This includes UnitID/FuntionCode }
+    RequestBuffer.TCPHeader.RecLength := Swap16(6); { This includes UnitID/FuntionCode }
     Result := SendCommand(RequestBuffer, wBlockLength, Data, HandleReadBitsResponse);
     for i := 0 to (wBlockLength - 1) do
       RegisterData[i] := (Data[i] = 1);
@@ -608,7 +622,7 @@ procedure TIdModbusClient.HandleReportSlaveIDResponse(const ResponseBuffer: TMod
 var
   BlockLength: Word;
 begin
-  BlockLength := Swap16(ResponseBuffer.Header.RecLength) - 2;
+  BlockLength := Swap16(ResponseBuffer.TCPHeader.RecLength) - 2;
   GetReportFromBuffer(@ResponseBuffer.MBPData[0], BlockLength, RegisterData);
 end;
 
@@ -627,7 +641,7 @@ begin
   FillChar(RegisterData[0], Length(RegisterData), 0);
   try
     RequestBuffer := BuildRequestBuffer(mbfReportSlaveID, 0);
-    RequestBuffer.Header.RecLength := Swap16(2); { This includes UnitID/FuntionCode }
+    RequestBuffer.TCPHeader.RecLength := Swap16(2); { This includes UnitID/FuntionCode }
     Result := SendCommandToSocket(RequestBuffer, RegisterData, HandleReportSlaveIDResponse);
   finally
     if bNewConnection then
@@ -720,7 +734,7 @@ begin
     RequestBuffer := BuildRequestBuffer(mbfWriteOneReg, RegNo - FBaseRegister);
     RequestBuffer.MBPData[2] := Hi(Data[0]);
     RequestBuffer.MBPData[3] := Lo(Data[0]);
-    RequestBuffer.Header.RecLength := Swap16(6); { This includes UnitID/FuntionCode }
+    RequestBuffer.TCPHeader.RecLength := Swap16(6); { This includes UnitID/FuntionCode }
     Result := SendCommandToSocket(RequestBuffer, Data);
   finally
     if bNewConnection then
@@ -750,7 +764,7 @@ begin
     RequestBuffer.MBPData[3] := Lo(Data[0]);
     RequestBuffer.MBPData[4] := Hi(Data[1]);
     RequestBuffer.MBPData[5] := Lo(Data[1]);
-    RequestBuffer.Header.RecLength := Swap16(8); { This includes UnitID/FuntionCode }
+    RequestBuffer.TCPHeader.RecLength := Swap16(8); { This includes UnitID/FuntionCode }
     Result := SendCommandToSocket(RequestBuffer, Data);
   finally
     if bNewConnection then
@@ -789,7 +803,7 @@ begin
     RequestBuffer.MBPData[3] := Lo(wBlockLength);
     RequestBuffer.MbpData[4] := Byte(wBlockLength shl 1);
     PutRegistersIntoBuffer(@RequestBuffer.MBPData[5], wBlockLength, Data);
-    RequestBuffer.Header.RecLength := Swap16(7 + RequestBuffer.MbpData[4]);
+    RequestBuffer.TCPHeader.RecLength := Swap16(7 + RequestBuffer.MbpData[4]);
     Result := SendCommandToSocket(RequestBuffer, Data);
   finally
     if bNewConnection then
@@ -824,7 +838,7 @@ begin
     else
        RequestBuffer.MBPData[2] := 0;
     RequestBuffer.MBPData[3] := 0;
-    RequestBuffer.Header.RecLength := Swap16(6); { This includes UnitID/FuntionCode }
+    RequestBuffer.TCPHeader.RecLength := Swap16(6); { This includes UnitID/FuntionCode }
     Result := SendCommandToSocket(RequestBuffer, Data);
   finally
     if bNewConnection then
@@ -867,7 +881,7 @@ begin
     RequestBuffer.MBPData[3] := Lo(wBlockLength);
     RequestBuffer.MBPData[4] := Byte((wBlockLength + 7) div 8);
     PutCoilsIntoBuffer(@RequestBuffer.MBPData[5], wBlockLength, Data);
-    RequestBuffer.Header.RecLength := Swap16(7 + RequestBuffer.MBPData[4]);
+    RequestBuffer.TCPHeader.RecLength := Swap16(7 + RequestBuffer.MBPData[4]);
     Result := SendCommandToSocket(RequestBuffer, Data);
   finally
     if bNewConnection then
