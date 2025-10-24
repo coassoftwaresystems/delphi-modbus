@@ -67,8 +67,6 @@ type
     function GetVersion: String;
     procedure SetVersion(const Value: String);
     function GetNewTransactionID: Word;
-    procedure HandlePrivateCommandResponse(const ResponseBuffer: TModBusResponseBuffer;
-      out RegisterData: array of Word);
     procedure HandleReadBitsResponse(const ResponseBuffer: TModBusResponseBuffer;
       out RegisterData: array of Word);
     procedure HandleReadHoldingRegistersResponse(const ResponseBuffer: TModBusResponseBuffer;
@@ -117,7 +115,6 @@ type
     function ReportSlaveID(const Blocks: Word; out RegisterData: array of Word): Boolean;
     function ReadDeviceIdentification(const ReadDeviceIDCode: Byte; const ObjectID: Byte; 
       out DeviceIDData: TModDeviceIdentificationData): Boolean;
-    function SendPrivateCommand(const FunctionCode: TModBusFunction; const Data: TModBusDataBuffer): TModBusDataBuffer;
     function WriteCoil(const RegNo: Word; const Value: Boolean): Boolean;
     function WriteCoils(const RegNo: Word; const Blocks: Word; const RegisterData: array of Boolean): Boolean;
     function WriteRegister(const RegNo: Word; const Value: Word): Boolean;
@@ -400,12 +397,6 @@ begin
 end;
 
 
-procedure TIdModBusClient.HandlePrivateCommandResponse(const ResponseBuffer: TModBusResponseBuffer;
-  out RegisterData: array of Word);
-begin
-end;
-
-
 procedure TIdModBusClient.HandleReadBitsResponse(const ResponseBuffer: TModBusResponseBuffer;
   out RegisterData: array of Word);
 var
@@ -464,35 +455,6 @@ var
 begin
   Result := ReadHoldingRegisters(RegNo, 1, Data);
   Value := Data[0];
-end;
-
-
-function TIdModBusClient.SendPrivateCommand(const FunctionCode: TModBusFunction; const Data: TModBusDataBuffer): TModBusDataBuffer;
-var
-  bNewConnection: Boolean;
-  RequestBuffer: TModbusRequestBuffer;
-  RegisterData: array of Word;
-begin
-  bNewConnection := False;
-  if FAutoConnect and not Connected then
-  begin
-    Connect;
-    bNewConnection := True;
-  end;
-
-  try
-    RequestBuffer := BuildRequestBuffer(FunctionCode, 0);
-    Move(Data, RequestBuffer.MBPData, SizeOf(RequestBuffer.MBPData));
-    SetLength(RegisterData, SizeOf(Data));
-    FillChar(RegisterData, SizeOf(Data), 0);
-    if (SendCommandToSocket(RequestBuffer, RegisterData, HandlePrivateCommandResponse)) then
-      Move(RegisterData[0], Result, SizeOf(Result))
-    else
-      FillChar(Result, SizeOf(Result), 0);
-  finally
-    if bNewConnection then
-      DisConnect;
-  end;
 end;
 
 
@@ -703,26 +665,8 @@ end;
 procedure TIdModbusClient.HandleReadDeviceIdentificationResponse(const ResponseBuffer: TModBusResponseBuffer;
   out RegisterData: array of Word);
 var
-  DataIndex: Integer;
-  NumObjects: Integer;
   i: Integer;
-  ObjectID: Byte;
-  ObjectLength: Byte;
 begin
-  // Response format:
-  // MBPData[0] = MEI Type (0x0E)
-  // MBPData[1] = Read Device ID Code
-  // MBPData[2] = Conformity Level
-  // MBPData[3] = More Follows
-  // MBPData[4] = Next Object ID
-  // MBPData[5] = Number of Objects
-  // MBPData[6+] = Object List (ID, Length, Value)
-  
-  NumObjects := ResponseBuffer.MBPData[5];
-  DataIndex := 6;
-  
-  // Pack the response into RegisterData as raw bytes for user processing
-  // This allows the user to parse the device identification objects
   for i := 0 to Min(High(RegisterData), Swap16(ResponseBuffer.TCPHeader.RecLength) - 3) do
     RegisterData[i] := ResponseBuffer.MBPData[i];
 end;
@@ -734,11 +678,11 @@ var
   bNewConnection: Boolean;
   RequestBuffer: TModbusRequestBuffer;
   RegisterData: array of Word;
-  DataIndex: Integer;
-  NumObjects: Integer;
+  iDataIndex: Integer;
+  iNumObjects: Integer;
   i: Integer;
-  ObjID: Byte;
-  ObjLength: Byte;
+  bObjectID: Byte;
+  bObjectLength: Byte;
 begin
   Result := False;
   SetLength(DeviceIDData, 0);
@@ -770,25 +714,25 @@ begin
       // RegisterData[5] = Number of Objects
       // RegisterData[6+] = Object List
       
-      NumObjects := RegisterData[5];
-      if NumObjects > 0 then
+      iNumObjects := RegisterData[5];
+      if (iNumObjects > 0) then
       begin
-        SetLength(DeviceIDData, NumObjects);
-        DataIndex := 6;
-        
-        for i := 0 to NumObjects - 1 do
+        SetLength(DeviceIDData, iNumObjects);
+        iDataIndex := 6;
+
+        for i := 0 to (iNumObjects - 1) do
         begin
-          ObjID := Byte(RegisterData[DataIndex]);
-          Inc(DataIndex);
-          ObjLength := Byte(RegisterData[DataIndex]);
-          Inc(DataIndex);
-          
-          DeviceIDData[i].ObjectID := ObjID;
-          SetLength(DeviceIDData[i].ObjectValue, ObjLength);
-          if ObjLength > 0 then
+          bObjectID := Byte(RegisterData[iDataIndex]);
+          Inc(iDataIndex);
+          bObjectLength := Byte(RegisterData[iDataIndex]);
+          Inc(iDataIndex);
+
+          DeviceIDData[i].ObjectID := bObjectID;
+          SetLength(DeviceIDData[i].ObjectValue, bObjectLength);
+          if (bObjectLength > 0) then
           begin
-            Move(RegisterData[DataIndex], DeviceIDData[i].ObjectValue[1], ObjLength);
-            Inc(DataIndex, ObjLength);
+            Move(RegisterData[iDataIndex], DeviceIDData[i].ObjectValue[1], bObjectLength);
+            Inc(iDataIndex, bObjectLength);
           end;
         end;
         Result := True;

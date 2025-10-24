@@ -158,15 +158,15 @@ type
     property Version: String read GetVersion write SetVersion stored False;
   { events }
     property OnError: TModBusErrorEvent read FOnError write FOnError;
+    property OnHeaderValidation: TModbusServerHeaderValidationEvent read FOnHeaderValidation write FOnHeaderValidation;
     property OnInvalidFunction: TModBusInvalidFunctionEvent read FOnInvalidFunction write FOnInvalidFunction;
     property OnReadCoils: TModBusCoilReadEvent read FOnReadCoils write FOnReadCoils;
+    property OnReadDeviceIdentification: TModBusDeviceIdentificationEvent read FOnReadDeviceIdentification write FOnReadDeviceIdentification;
     property OnReadHoldingRegisters: TModBusRegisterReadEvent read FOnReadHoldingRegisters write FOnReadHoldingRegisters;
     property OnReadInputBits: TModBusCoilReadEvent read FOnReadInputBits write FOnReadInputBits;
     property OnReadInputRegisters: TModBusRegisterReadEvent read FOnReadInputRegisters write FOnReadInputRegisters;
     property OnWriteCoils: TModBusCoilWriteEvent read FOnWriteCoils write FOnWriteCoils;
     property OnWriteRegisters: TModBusRegisterWriteEvent read FOnWriteRegisters write FOnWriteRegisters;
-    property OnReadDeviceIdentification: TModBusDeviceIdentificationEvent read FOnReadDeviceIdentification write FOnReadDeviceIdentification;
-    property OnHeaderValidation: TModbusServerHeaderValidationEvent read FOnHeaderValidation write FOnHeaderValidation;
   end; { TIdModBusServer }
 
 
