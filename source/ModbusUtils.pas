@@ -37,6 +37,8 @@ function CalculateLRC(const Buffer: array of Byte): Byte;
 
 function Swap16(const DataToSwap: Word): Word;
 
+function IsValidPrivateFunctionCode(const FunctionCode: Byte): Boolean;
+
 procedure GetCoilsFromBuffer(const Buffer: PByte; const Count: Word; var Data: array of Word);
 procedure PutCoilsIntoBuffer(const Buffer: PByte; const Count: Word; const Data: array of Word);
 
@@ -48,7 +50,7 @@ procedure PutRegistersIntoBuffer(const Buffer: PWord; const Count: Word; const D
 implementation
 
 uses
-  SysUtils;
+  SysUtils, ModbusConsts;
 
 const
   CRC16Table: array[0..255] of Word = (
@@ -127,6 +129,13 @@ end;
 function Swap16(const DataToSwap: Word): Word;
 begin
   Result := (DataToSwap div 256) + ((DataToSwap mod 256) * 256);
+end;
+
+
+function IsValidPrivateFunctionCode(const FunctionCode: Byte): Boolean;
+begin
+  Result := ((FunctionCode >= mbfPrivateMin1) and (FunctionCode <= mbfPrivateMax1)) or
+            ((FunctionCode >= mbfPrivateMin2) and (FunctionCode <= mbfPrivateMax2));
 end;
 
 

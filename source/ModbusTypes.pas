@@ -86,6 +86,9 @@ type
   EModbusHeaderValidation = class(Exception);
 
 type
+  EModbusInvalidPrivateFunction = class(Exception);
+
+type
   TModDeviceIdentificationObject = record
     ObjectID: Byte;
     ObjectValue: String;

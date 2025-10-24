@@ -46,6 +46,12 @@ type
     const ResponseBuffer: TModBusResponseBuffer; const RawBuffer: TIdBytes) of object;
   TModbusClientHeaderValidationEvent = procedure(const ReceivedSize: Integer;
     const ExpectedSize: Integer; const RawBuffer: TIdBytes) of object;
+  TModbusClientPrivateFunctionEvent = procedure(const FunctionCode: Byte;
+    const RequestBuffer: TModBusRequestBuffer; var Data: TModBusDataBuffer;
+    var DataSize: Integer) of object;
+  TModbusClientPrivateResponseEvent = procedure(const FunctionCode: Byte;
+    const ResponseBuffer: TModBusResponseBuffer; const Data: TModBusDataBuffer;
+    const DataSize: Integer) of object;
 
 type
 {$I ModBusPlatforms.inc}
@@ -60,6 +66,8 @@ type
     FOnResponseError: TModbusClientErrorEvent;
     FOnResponseMismatch: TModBusClientResponseMismatchEvent;
     FOnHeaderValidation: TModbusClientHeaderValidationEvent;
+    FOnPrivateFunction: TModbusClientPrivateFunctionEvent;
+    FOnPrivateResponse: TModbusClientPrivateResponseEvent;
     FLastTransactionID: Word;
     FReadTimeout: Integer;
     FTimeOut: Cardinal;
@@ -124,6 +132,7 @@ type
     function WriteDWord(const RegNo: Word; const Value: DWord): Boolean;
     function WriteSingle(const RegNo: Word; const Value: Single): Boolean;
     function WriteString(const RegNo: Word; const Text: String): Boolean;
+    function SendPrivateFunction(const FunctionCode: Byte): Boolean;
   published
     property AutoConnect: Boolean read FAutoConnect write FAutoConnect default True;
     property BaseRegister: Word read FBaseRegister write FBaseRegister default 1;
@@ -140,6 +149,8 @@ type
     property OnResponseError: TModbusClientErrorEvent read FOnResponseError write FOnResponseError;
     property OnResponseMismatch: TModBusClientResponseMismatchEvent read FOnResponseMismatch write FOnResponseMismatch;
     property OnHeaderValidation: TModbusClientHeaderValidationEvent read FOnHeaderValidation write FOnHeaderValidation;
+    property OnPrivateFunction: TModbusClientPrivateFunctionEvent read FOnPrivateFunction write FOnPrivateFunction;
+    property OnPrivateResponse: TModbusClientPrivateResponseEvent read FOnPrivateResponse write FOnPrivateResponse;
   end;
 
 
@@ -175,6 +186,8 @@ begin
   FOnResponseError := nil;
   FOnResponseMismatch := nil;
   FOnHeaderValidation := nil;
+  FOnPrivateFunction := nil;
+  FOnPrivateResponse := nil;
 end;
 
 
@@ -978,6 +991,202 @@ begin
     PutCoilsIntoBuffer(@RequestBuffer.MBPData[5], wBlockLength, Data);
     RequestBuffer.TCPHeader.RecLength := Swap16(7 + RequestBuffer.MBPData[4]);
     Result := SendCommandToSocket(RequestBuffer, Data);
+  finally
+    if bNewConnection then
+      DisConnect;
+  end;
+end;
+
+
+function TIdModBusClient.SendPrivateFunction(const FunctionCode: Byte): Boolean;
+var
+  RequestBuffer: TModBusRequestBuffer;
+  ResponseBuffer: TModBusResponseBuffer;
+  Data: TModBusDataBuffer;
+  DataSize: Integer;
+  Buffer: TIdBytes;
+  Crc: Word;
+  dtTimeOut: TDateTime;
+  iSize: Integer;
+  ReceiveBuffer: TIdBytes;
+  bNewConnection: Boolean;
+  BufferSize: Integer;
+begin
+  Result := False;
+  
+  // Validate function code is in the private/user-defined range
+  if not IsValidPrivateFunctionCode(FunctionCode) then
+    raise EModbusInvalidPrivateFunction.CreateFmt('Invalid private function code: $%x. Must be $41..$48 or $64..$6E', [FunctionCode]);
+
+  // Check if event handler is assigned
+  if not Assigned(FOnPrivateFunction) then
+    raise EModbusInvalidPrivateFunction.Create('OnPrivateFunction event handler must be assigned to use private functions');
+
+  bNewConnection := False;
+  if FAutoConnect and not Connected then
+  begin
+    Connect;
+    bNewConnection := True;
+  end;
+
+  try
+    // Initialize buffer and request data from user
+    FillChar(RequestBuffer, SizeOf(RequestBuffer), 0);
+    FillChar(Data, SizeOf(Data), 0);
+    DataSize := 0;
+    
+    // Build request header
+    RequestBuffer.TCPHeader.TransactionID := GetNewTransactionID;
+    RequestBuffer.TCPHeader.ProtocolID := MB_PROTOCOL;
+    RequestBuffer.FunctionCode := FunctionCode;
+    RequestBuffer.Header.UnitID := FUnitID;
+    
+    // Call event handler to populate request data
+    FOnPrivateFunction(FunctionCode, RequestBuffer, Data, DataSize);
+    
+    // Copy user data to request buffer
+    if DataSize > 0 then
+    begin
+      if DataSize > SizeOf(RequestBuffer.MBPData) then
+        DataSize := SizeOf(RequestBuffer.MBPData);
+      Move(Data[0], RequestBuffer.MBPData[0], DataSize);
+    end;
+    
+    // Set record length for TCP mode
+    RequestBuffer.TCPHeader.RecLength := Swap16(2 + DataSize); // UnitID + FunctionCode + Data
+    
+    CheckForGracefulDisconnect(True);
+    
+    // Clear input buffer to prevent reading possible data left from previous request
+    if Connected then
+      IOHandler.InputBuffer.Clear;
+      
+    // Write out the data to the connection
+    if (FTransportMode = tmRTU) then
+    begin
+      // RTU mode: skip TCP header, send UnitID + FunctionCode + Data + CRC
+      BufferSize := 1 + 1 + DataSize; // UnitID + FunctionCode + Data
+      Buffer := RawToBytes(RequestBuffer.Header, BufferSize);
+      Crc := CalculateCRC16(Buffer);
+    {$IFDEF DMB_DELPHIXE3}
+      SetLength(Buffer, IndyLength(Buffer) + 2);
+    {$ELSE}
+      SetLength(Buffer, Length(Buffer) + 2);
+    {$ENDIF}
+      Buffer[High(Buffer) - 1] := Lo(Crc);
+      Buffer[High(Buffer)] := Hi(Crc);
+    end
+    else
+    begin
+      // TCP mode: send full buffer with TCP header
+      Buffer := RawToBytes(RequestBuffer, Swap16(RequestBuffer.TCPHeader.RecLength) + MB_TCP_HEADER_SIZE);
+    end;
+
+    IOHandler.WriteDirect(Buffer);
+    DoSendBuffer(RequestBuffer, Buffer);
+
+    // Wait for data from the device
+    if (FTimeOut > 0) then
+    begin
+      dtTimeOut := Now + (FTimeOut / 86400000);
+      while (IOHandler.InputBuffer.Size = 0) do
+      begin
+        IOHandler.CheckForDataOnSource(FReadTimeout);
+        if (Now > dtTimeOut) then
+        begin
+          Result := False;
+          Exit;
+        end;
+      end;
+    end;
+
+    Result := True;
+    iSize := IOHandler.InputBuffer.Size;
+    IOHandler.ReadBytes(ReceiveBuffer, iSize);
+
+    if (FTransportMode = tmRTU) then
+    begin
+      // RTU mode: validate CRC and parse without TCP header
+      if (iSize >= 2) then
+      begin
+        Crc := CalculateCRC16(Copy(ReceiveBuffer, 0, iSize - 2));
+        if ((Lo(Crc) <> ReceiveBuffer[iSize - 2]) or (Hi(Crc) <> ReceiveBuffer[iSize - 1])) then
+        begin
+          Result := False;
+          Exit;
+        end;
+      end
+      else
+      begin
+        Result := False;
+        Exit;
+      end;
+      // Copy response without TCP header
+      FillChar(ResponseBuffer, SizeOf(ResponseBuffer), 0);
+      Move(ReceiveBuffer[0], ResponseBuffer.Header, Min(iSize, SizeOf(ResponseBuffer) - SizeOf(ResponseBuffer.TCPHeader)));
+    end
+    else
+    begin
+      // TCP mode: parse normally with TCP header
+      Move(ReceiveBuffer[0], ResponseBuffer, Min(iSize, Sizeof(ResponseBuffer)));
+      
+      // Validate MBAP header: check if RecLength matches received data
+      if (FValidateHeader <> hvDisabled) then
+      begin
+        if (iSize >= SizeOf(TModBusTCPHeader)) then
+        begin
+          BufferSize := Swap16(ResponseBuffer.TCPHeader.RecLength);
+          if (iSize <> BufferSize + MB_TCP_HEADER_SIZE) then
+          begin
+            DoHeaderValidation(iSize, BufferSize + MB_TCP_HEADER_SIZE, ReceiveBuffer);
+            if (FValidateHeader = hvException) then
+              raise EModbusHeaderValidation.CreateFmt(sHeaderValidationError, [iSize, BufferSize + MB_TCP_HEADER_SIZE]);
+            Result := False;
+            Exit;
+          end;
+        end
+        else
+        begin
+          DoHeaderValidation(iSize, SizeOf(TModBusTCPHeader), ReceiveBuffer);
+          if (FValidateHeader = hvException) then
+            raise EModbusHeaderValidation.CreateFmt(sHeaderValidationError, [iSize, SizeOf(TModBusTCPHeader)]);
+          Result := False;
+          Exit;
+        end;
+      end;
+    end;
+
+    DoReceiveBuffer(RequestBuffer, ResponseBuffer, ReceiveBuffer);
+
+    // Check if the result has the same function code as the request
+    if (RequestBuffer.FunctionCode = ResponseBuffer.FunctionCode) then
+    begin
+      // Success - call response event handler
+      if Assigned(FOnPrivateResponse) then
+      begin
+        DataSize := iSize - MB_TCP_HEADER_SIZE - 2; // Subtract TCP header + UnitID + FunctionCode
+        if (FTransportMode = tmRTU) then
+          DataSize := iSize - 2 - 2; // Subtract UnitID + FunctionCode + CRC
+        
+        if DataSize > 0 then
+        begin
+          FillChar(Data, SizeOf(Data), 0);
+          Move(ResponseBuffer.MBPData[0], Data[0], Min(DataSize, SizeOf(Data)));
+          FOnPrivateResponse(FunctionCode, ResponseBuffer, Data, DataSize);
+        end
+        else
+          FOnPrivateResponse(FunctionCode, ResponseBuffer, Data, 0);
+      end;
+    end
+    else
+    begin
+      // Check for error response
+      if ((RequestBuffer.FunctionCode or $80) = ResponseBuffer.FunctionCode) then
+        DoResponseError(RequestBuffer.FunctionCode, ResponseBuffer.MBPData[0], ResponseBuffer)
+      else
+        DoResponseMismatch(RequestBuffer.FunctionCode, ResponseBuffer.FunctionCode, ResponseBuffer);
+      Result := False;
+    end;
   finally
     if bNewConnection then
       DisConnect;

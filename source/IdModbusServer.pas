@@ -67,6 +67,10 @@ type
     const ReadDeviceIDCode: Byte; const ObjectID: Byte; 
     var DeviceIdentificationData: TModDeviceIdentificationData;
     const RequestBuffer: TModBusRequestBuffer; var ErrorCode: Byte) of object;
+  TModBusPrivateFunctionEvent = procedure(const Sender: TIdContext;
+    const FunctionCode: Byte; const RequestBuffer: TModBusRequestBuffer;
+    var ResponseData: TModBusDataBuffer; var ResponseDataSize: Integer;
+    var ErrorCode: Byte) of object;
 
 type
 {$I ModBusPlatforms.inc}
@@ -89,6 +93,7 @@ type
     FOnWriteCoils: TModBusCoilWriteEvent;
     FOnWriteRegisters: TModBusRegisterWriteEvent;
     FOnReadDeviceIdentification: TModBusDeviceIdentificationEvent;
+    FOnPrivateFunction: TModBusPrivateFunctionEvent;
     FOnHeaderValidation: TModbusServerHeaderValidationEvent;
     FPause: Boolean;
     FTransportMode: TModBusTransportMode;
@@ -128,6 +133,9 @@ type
     procedure DoReadDeviceIdentification(const AContext: TIdContext; const ReadDeviceIDCode: Byte;
       const ObjectID: Byte; var DeviceIdentificationData: TModDeviceIdentificationData;
       const RequestBuffer: TModBusRequestBuffer; var ErrorCode: Byte); virtual;
+    procedure DoPrivateFunction(const AContext: TIdContext; const FunctionCode: Byte;
+      const RequestBuffer: TModBusRequestBuffer; var ResponseData: TModBusDataBuffer;
+      var ResponseDataSize: Integer; var ErrorCode: Byte); virtual;
     procedure LogExceptionBuffer(const AContext: TIdContext; const Buffer: TModBusExceptionBuffer);
     procedure LogRequestBuffer(const AContext: TIdContext; const Buffer: TModBusRequestBuffer; const Size: Integer);
     procedure LogResponseBuffer(const AContext: TIdContext; const Buffer: TModBusResponseBuffer; const Size: Integer);
@@ -139,6 +147,9 @@ type
     procedure SendDeviceIdentificationResponse(const AContext: TIdContext; 
       const ReceiveBuffer: TModBusRequestBuffer; const ReadDeviceIDCode: Byte;
       const DeviceIdentificationData: TModDeviceIdentificationData);
+    procedure SendPrivateResponse(const AContext: TIdContext;
+      const ReceiveBuffer: TModBusRequestBuffer; const ResponseData: TModBusDataBuffer;
+      const ResponseDataSize: Integer);
   public
     destructor Destroy(); override;
   { public properties }
@@ -167,6 +178,7 @@ type
     property OnReadInputRegisters: TModBusRegisterReadEvent read FOnReadInputRegisters write FOnReadInputRegisters;
     property OnWriteCoils: TModBusCoilWriteEvent read FOnWriteCoils write FOnWriteCoils;
     property OnWriteRegisters: TModBusRegisterWriteEvent read FOnWriteRegisters write FOnWriteRegisters;
+    property OnPrivateFunction: TModBusPrivateFunctionEvent read FOnPrivateFunction write FOnPrivateFunction;
   end; { TIdModBusServer }
 
 
@@ -198,6 +210,7 @@ begin
   FOnWriteCoils := nil;
   FOnWriteRegisters := nil;
   FOnReadDeviceIdentification := nil;
+  FOnPrivateFunction := nil;
   FOnHeaderValidation := nil;
   FPause := False;
   FTransportMode := tmTCP;
@@ -599,7 +612,33 @@ begin
           end;
         end;
     else
-      if (ReceiveBuffer.FunctionCode <> 0) then
+      // Check if this is a private/user-defined function code
+      if IsValidPrivateFunctionCode(ReceiveBuffer.FunctionCode) then
+      begin
+        // Handle private function
+        if Assigned(FOnPrivateFunction) then
+        begin
+          ErrorCode := mbeOk;
+          FillChar(Data, SizeOf(Data), 0);
+          iCount := 0; // Using iCount as ResponseDataSize
+          
+          // Call user's event handler to process the private function
+          DoPrivateFunction(AContext, ReceiveBuffer.FunctionCode, ReceiveBuffer, 
+            TModBusDataBuffer(Data), iCount, ErrorCode);
+          
+          if (ErrorCode = mbeOk) then
+            SendPrivateResponse(AContext, ReceiveBuffer, TModBusDataBuffer(Data), iCount)
+          else
+            SendError(AContext, ErrorCode, ReceiveBuffer);
+        end
+        else
+        begin
+          // No handler assigned for private functions
+          SendError(AContext, mbeIllegalFunction, ReceiveBuffer);
+          DoInvalidFunction(AContext, ReceiveBuffer.FunctionCode, ReceiveBuffer);
+        end;
+      end
+      else if (ReceiveBuffer.FunctionCode <> 0) then
       begin
       { Illegal or unsupported function code }
         SendError(AContext, mbeIllegalFunction, ReceiveBuffer);
@@ -691,6 +730,15 @@ procedure TIdModBusServer.DoReadDeviceIdentification(const AContext: TIdContext;
 begin
   if Assigned(FOnReadDeviceIdentification) then
     FOnReadDeviceIdentification(AContext, ReadDeviceIDCode, ObjectID, DeviceIdentificationData, RequestBuffer, ErrorCode);
+end;
+
+
+procedure TIdModBusServer.DoPrivateFunction(const AContext: TIdContext;
+  const FunctionCode: Byte; const RequestBuffer: TModBusRequestBuffer;
+  var ResponseData: TModBusDataBuffer; var ResponseDataSize: Integer; var ErrorCode: Byte);
+begin
+  if Assigned(FOnPrivateFunction) then
+    FOnPrivateFunction(AContext, FunctionCode, RequestBuffer, ResponseData, ResponseDataSize, ErrorCode);
 end;
 
 
@@ -904,6 +952,56 @@ begin
     
     // Set the RecLength (UnitID + FunctionCode + Data)
     SendBuffer.TCPHeader.RecLength := Swap16(1 + 1 + DataIndex);
+    
+    if (FTransportMode = tmRTU) then
+    begin
+      // RTU mode: send without TCP header
+      BufferSize := Swap16(SendBuffer.TCPHeader.RecLength) + 1; // RecLength + UnitID
+      Buffer := RawToBytes(SendBuffer.Header, BufferSize);
+      Crc := CalculateCRC16(Buffer);
+    {$IFDEF DMB_DELPHIXE3}
+      SetLength(Buffer, IndyLength(Buffer) + 2);
+    {$ELSE}
+      SetLength(Buffer, Length(Buffer) + 2);
+    {$ENDIF}
+      Buffer[High(Buffer) - 1] := Lo(Crc);
+      Buffer[High(Buffer)] := Hi(Crc);
+    end
+    else
+    begin
+      // TCP mode: send with TCP header
+      Buffer := RawToBytes(SendBuffer, Swap16(SendBuffer.TCPHeader.RecLength) + MB_TCP_HEADER_SIZE);
+    end;
+    AContext.Connection.Socket.WriteDirect(Buffer);
+    if FLogEnabled then
+      LogResponseBuffer(AContext, SendBuffer, Swap16(SendBuffer.TCPHeader.RecLength) + MB_TCP_HEADER_SIZE);
+  end;
+end;
+
+
+procedure TIdModBusServer.SendPrivateResponse(const AContext: TIdContext;
+  const ReceiveBuffer: TModBusRequestBuffer; const ResponseData: TModBusDataBuffer;
+  const ResponseDataSize: Integer);
+var
+  SendBuffer: TModBusResponseBuffer;
+  Buffer: TIdBytes;
+  Crc: Word;
+  BufferSize: Integer;
+begin
+  if Active then
+  begin
+    FillChar(SendBuffer, SizeOf(SendBuffer), 0);
+    SendBuffer.TCPHeader.TransactionID := ReceiveBuffer.TCPHeader.TransactionID;
+    SendBuffer.TCPHeader.ProtocolID := ReceiveBuffer.TCPHeader.ProtocolID;
+    SendBuffer.Header.UnitID := ReceiveBuffer.Header.UnitID;
+    SendBuffer.FunctionCode := ReceiveBuffer.FunctionCode;
+    
+    // Copy response data
+    if (ResponseDataSize > 0) and (ResponseDataSize <= SizeOf(SendBuffer.MBPData)) then
+      Move(ResponseData[0], SendBuffer.MBPData[0], ResponseDataSize);
+    
+    // Set the RecLength (UnitID + FunctionCode + Data)
+    SendBuffer.TCPHeader.RecLength := Swap16(1 + 1 + ResponseDataSize);
     
     if (FTransportMode = tmRTU) then
     begin
