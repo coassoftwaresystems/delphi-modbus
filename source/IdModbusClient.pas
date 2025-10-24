@@ -64,8 +64,6 @@ type
     FReadTimeout: Integer;
     FTimeOut: Cardinal;
     FUnitID: Byte;
-    FPrivateFunctionResponseData: PByte;  // Temporary storage for private function response
-    FPrivateFunctionResponseSize: Integer;
     function GetVersion: String;
     procedure SetVersion(const Value: String);
     function GetNewTransactionID: Word;
@@ -683,18 +681,28 @@ procedure TIdModbusClient.HandlePrivateFunctionResponse(const ResponseBuffer: TM
 var
   i: Integer;
   DataSize: Integer;
+  ByteIndex: Integer;
 begin
-  // Extract byte data from response and store in the output array
-  // FPrivateFunctionResponseData points to the user's ResponseData array
-  // FPrivateFunctionResponseSize is the max size of that array
+  // Extract byte data from response and pack into Word array
+  // Each Word can hold 2 bytes (low byte and high byte)
   DataSize := Swap16(ResponseBuffer.TCPHeader.RecLength) - 2; // Subtract UnitID + FunctionCode
-  if DataSize > FPrivateFunctionResponseSize then
-    DataSize := FPrivateFunctionResponseSize;
-    
-  if (DataSize > 0) and (FPrivateFunctionResponseData <> nil) then
+  
+  // Pack bytes into words: 2 bytes per word
+  ByteIndex := 0;
+  for i := 0 to High(RegisterData) do
   begin
-    for i := 0 to DataSize - 1 do
-      FPrivateFunctionResponseData[i] := ResponseBuffer.MBPData[i];
+    if ByteIndex < DataSize then
+    begin
+      RegisterData[i] := ResponseBuffer.MBPData[ByteIndex];
+      Inc(ByteIndex);
+      if ByteIndex < DataSize then
+      begin
+        RegisterData[i] := RegisterData[i] or (Word(ResponseBuffer.MBPData[ByteIndex]) shl 8);
+        Inc(ByteIndex);
+      end;
+    end
+    else
+      Break;
   end;
 end;
 
@@ -1018,7 +1026,10 @@ var
   RequestBuffer: TModBusRequestBuffer;
   DataSize: Integer;
   bNewConnection: Boolean;
-  DummyData: array of Word;
+  ResponseWords: array of Word;
+  i: Integer;
+  ByteIndex: Integer;
+  MaxResponseBytes: Integer;
 begin
   Result := False;
   
@@ -1049,26 +1060,30 @@ begin
     // Set record length for TCP mode
     RequestBuffer.TCPHeader.RecLength := Swap16(2 + DataSize); // UnitID + FunctionCode + Data
     
-    // Store response data reference for the handler
-    if Length(ResponseData) > 0 then
-    begin
-      FPrivateFunctionResponseData := @ResponseData[0];
-      FPrivateFunctionResponseSize := Length(ResponseData);
-    end
-    else
-    begin
-      FPrivateFunctionResponseData := nil;
-      FPrivateFunctionResponseSize := 0;
-    end;
+    // Allocate Word array to receive response (2 bytes per word, round up)
+    MaxResponseBytes := Length(ResponseData);
+    SetLength(ResponseWords, (MaxResponseBytes + 1) div 2);
     
-    try
-      // Use SendCommandToSocket to handle all the communication
-      SetLength(DummyData, 0);
-      Result := SendCommandToSocket(RequestBuffer, DummyData, HandlePrivateFunctionResponse);
-    finally
-      // Clear the reference
-      FPrivateFunctionResponseData := nil;
-      FPrivateFunctionResponseSize := 0;
+    // Use SendCommandToSocket to handle all the communication
+    Result := SendCommandToSocket(RequestBuffer, ResponseWords, HandlePrivateFunctionResponse);
+    
+    // Unpack response data from Word array to Byte array
+    if Result and (Length(ResponseData) > 0) then
+    begin
+      ByteIndex := 0;
+      for i := 0 to High(ResponseWords) do
+      begin
+        if ByteIndex < Length(ResponseData) then
+        begin
+          ResponseData[ByteIndex] := Lo(ResponseWords[i]);
+          Inc(ByteIndex);
+        end;
+        if ByteIndex < Length(ResponseData) then
+        begin
+          ResponseData[ByteIndex] := Hi(ResponseWords[i]);
+          Inc(ByteIndex);
+        end;
+      end;
     end;
   finally
     if bNewConnection then
