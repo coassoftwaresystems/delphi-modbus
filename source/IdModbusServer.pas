@@ -361,6 +361,16 @@ begin
       begin
         // TCP mode: parse normally with TCP header
         Move(Buffer[0], ReceiveBuffer, Min(iCount, SizeOf(ReceiveBuffer)));
+        
+        // Validate MBAP header: check if RecLength matches received data
+        // RecLength field indicates number of bytes following it (excluding the 6-byte TCP header)
+        if (iCount >= SizeOf(TModBusTCPHeader)) then
+        begin
+          if (iCount <> Swap16(ReceiveBuffer.TCPHeader.RecLength) + 6) then
+            Exit; // Length mismatch, ignore the request
+        end
+        else
+          Exit; // Not enough data for a valid MBAP header
       end;
       if FLogEnabled then
         LogRequestBuffer(AContext, ReceiveBuffer, iCount);

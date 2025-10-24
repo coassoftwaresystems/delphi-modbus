@@ -319,6 +319,25 @@ begin
   begin
     // TCP mode: parse normally with TCP header
     Move(ReceiveBuffer[0], ResponseBuffer, Min(iSize, Sizeof(ResponseBuffer)));
+    
+    // Validate MBAP header: check if RecLength matches received data
+    // RecLength field indicates number of bytes following it (excluding the 6-byte TCP header)
+    if (iSize >= SizeOf(TModBusTCPHeader)) then
+    begin
+      BufferSize := Swap16(ResponseBuffer.TCPHeader.RecLength);
+      // iSize should be RecLength + 6 (size of TCP header)
+      if (iSize <> BufferSize + 6) then
+      begin
+        Result := False;
+        Exit;
+      end;
+    end
+    else
+    begin
+      // Not enough data received for a valid MBAP header
+      Result := False;
+      Exit;
+    end;
   end;
 
   DoReceiveBuffer(ARequestBuffer, ResponseBuffer, ReceiveBuffer);
