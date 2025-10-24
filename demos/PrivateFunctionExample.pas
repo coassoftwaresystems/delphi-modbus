@@ -94,7 +94,13 @@ begin
   case FunctionCode of
     $41: // Custom device identification
       begin
-        // Get command byte from request
+        // Get command byte from request - validate data exists first
+        if SizeOf(RequestBuffer.MBPData) < 1 then
+        begin
+          ErrorCode := mbeIllegalDataValue;
+          Exit;
+        end;
+        
         Command := RequestBuffer.MBPData[0];
         
         case Command of
@@ -125,6 +131,13 @@ begin
     $42: // Custom data read
       begin
         // Example: Read custom data based on address in request
+        // Validate data exists first
+        if SizeOf(RequestBuffer.MBPData) < 1 then
+        begin
+          ErrorCode := mbeIllegalDataValue;
+          Exit;
+        end;
+        
         Command := RequestBuffer.MBPData[0]; // Data address
         ResponseData[0] := Command;           // Echo address
         ResponseData[1] := $AA;               // Sample data byte 1
@@ -189,7 +202,6 @@ procedure ExampleClientPrivateResponse(
   const Data: TModBusDataBuffer;
   const DataSize: Integer);
 var
-  i: Integer;
   DeviceID: Word;
   FirmwareVersion: String;
 begin
