@@ -146,6 +146,8 @@ The implementation automatically handles the following error conditions:
    - `mbeServerFailure` ($04): Server failure
    - Other standard Modbus exception codes
 
+**Note**: Throughout this document, hexadecimal values are shown with the '$' prefix (Pascal convention), e.g., $0E, $01, $02, etc.
+
 ## Protocol Details
 
 ### Request Format (TCP)

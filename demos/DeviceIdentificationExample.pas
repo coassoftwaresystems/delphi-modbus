@@ -136,7 +136,7 @@ begin
               DeviceIdentificationData[0].ObjectValue := 'ModbusServer-Standard';
             end;
         else
-          // Object ID not found - return illegal data address error
+          // Object ID not found - return illegal register error (exception code 0x02)
           ErrorCode := mbeIllegalRegister;
         end;
       end;
