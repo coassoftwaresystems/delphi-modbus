@@ -44,6 +44,8 @@ type
     const RawBuffer: TIdBytes) of object;
   TModbusClientReceiveBufferEvent = procedure(const RequestBuffer: TModBusRequestBuffer;
     const ResponseBuffer: TModBusResponseBuffer; const RawBuffer: TIdBytes) of object;
+  TModbusClientHeaderValidationEvent = procedure(const ReceivedSize: Integer;
+    const ExpectedSize: Integer; const RawBuffer: TIdBytes) of object;
 
 type
 {$I ModBusPlatforms.inc}
@@ -57,6 +59,7 @@ type
     FOnReceiveBuffer: TModbusClientReceiveBufferEvent;
     FOnResponseError: TModbusClientErrorEvent;
     FOnResponseMismatch: TModBusClientResponseMismatchEvent;
+    FOnHeaderValidation: TModbusClientHeaderValidationEvent;
     FLastTransactionID: Word;
     FReadTimeout: Integer;
     FTimeOut: Cardinal;
@@ -84,6 +87,8 @@ type
       const ResponseBuffer: TModBusResponseBuffer); virtual;
     procedure DoResponseMismatch(const RequestFunctionCode: Byte; const ResponseFunctionCode: Byte;
       const ResponseBuffer: TModBusResponseBuffer); virtual;
+    procedure DoHeaderValidation(const ReceivedSize: Integer; const ExpectedSize: Integer;
+      const Buffer: TIdBytes); virtual;
     function ReadBits(const AModBusFunction: TModBusFunction; const RegNo, ABlockLength: Word;
       out RegisterData: array of Boolean): Boolean;
     procedure InitComponent; override;
@@ -133,6 +138,7 @@ type
     property OnReceiveBuffer: TModbusClientReceiveBufferEvent read FOnReceiveBuffer write FOnReceiveBuffer;
     property OnResponseError: TModbusClientErrorEvent read FOnResponseError write FOnResponseError;
     property OnResponseMismatch: TModBusClientResponseMismatchEvent read FOnResponseMismatch write FOnResponseMismatch;
+    property OnHeaderValidation: TModbusClientHeaderValidationEvent read FOnHeaderValidation write FOnHeaderValidation;
   end;
 
 
@@ -167,6 +173,7 @@ begin
   FOnReceiveBuffer := nil;
   FOnResponseError := nil;
   FOnResponseMismatch := nil;
+  FOnHeaderValidation := nil;
 end;
 
 
@@ -212,6 +219,13 @@ begin
     FOnResponseMismatch(RequestFunctionCode, ResponseFunctionCode, ResponseBuffer);
 end;
 
+
+procedure TIdModBusClient.DoHeaderValidation(const ReceivedSize: Integer; 
+  const ExpectedSize: Integer; const Buffer: TIdBytes);
+begin
+  if Assigned(FOnHeaderValidation) then
+    FOnHeaderValidation(ReceivedSize, ExpectedSize, Buffer);
+end;
 
 
 function TIdModBusClient.SendCommand(var ARequestBuffer: TModBusRequestBuffer;
@@ -333,6 +347,10 @@ begin
         // iSize should be RecLength + TCP header size
         if (iSize <> BufferSize + MB_TCP_HEADER_SIZE) then
         begin
+          // Fire event for both hvException and hvIgnore modes
+          if (FValidateHeader = hvException) or (FValidateHeader = hvIgnore) then
+            DoHeaderValidation(iSize, BufferSize + MB_TCP_HEADER_SIZE, ReceiveBuffer);
+          
           if (FValidateHeader = hvException) then
             raise EModbusHeaderValidation.CreateFmt(sHeaderValidationError, [iSize, BufferSize + MB_TCP_HEADER_SIZE]);
           // hvIgnore: just return False without raising exception
@@ -343,6 +361,10 @@ begin
       else
       begin
         // Not enough data received for a valid MBAP header
+        // Fire event for both hvException and hvIgnore modes
+        if (FValidateHeader = hvException) or (FValidateHeader = hvIgnore) then
+          DoHeaderValidation(iSize, SizeOf(TModBusTCPHeader), ReceiveBuffer);
+        
         if (FValidateHeader = hvException) then
           raise EModbusHeaderValidation.CreateFmt(sHeaderValidationError, [iSize, SizeOf(TModBusTCPHeader)]);
         Result := False;

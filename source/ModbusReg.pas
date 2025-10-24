@@ -69,12 +69,14 @@ begin
   RegisterPropertyInCategory(sModbus, TIdModbusClient, 'ReadTimeout');
   RegisterPropertyInCategory(sModbus, TIdModbusClient, 'TimeOut');
   RegisterPropertyInCategory(sModbus, TIdModbusClient, 'UnitID');
+  RegisterPropertyInCategory(sModbus, TIdModbusClient, 'ValidateHeader');
   RegisterPropertyInCategory(sModbus, TIdModbusClient, 'Version');
 { Register the property categories for the client events }
   RegisterPropertyInCategory(sModbus, TIdModbusClient, 'OnSendBuffer');
   RegisterPropertyInCategory(sModbus, TIdModbusClient, 'OnReceiveBuffer');
   RegisterPropertyInCategory(sModbus, TIdModbusClient, 'OnResponseError');
   RegisterPropertyInCategory(sModbus, TIdModbusClient, 'OnResponseMismatch');
+  RegisterPropertyInCategory(sModbus, TIdModbusClient, 'OnHeaderValidation');
 
 { Register the property categories for the server component }
   RegisterPropertyInCategory(sModbus, TIdModbusServer, 'BaseRegister');
@@ -82,6 +84,7 @@ begin
   RegisterPropertyInCategory(sModbus, TIdModbusServer, 'MaxRegister');
   RegisterPropertyInCategory(sModbus, TIdModbusServer, 'MinRegister');
   RegisterPropertyInCategory(sModbus, TIdModbusServer, 'UnitID');
+  RegisterPropertyInCategory(sModbus, TIdModbusServer, 'ValidateHeader');
   RegisterPropertyInCategory(sModbus, TIdModbusServer, 'Version');
   RegisterPropertyInCategory(sLogging, TIdModbusServer, 'LogEnabled');
   RegisterPropertyInCategory(sLogging, TIdModbusServer, 'LogFile');
@@ -95,6 +98,7 @@ begin
   RegisterPropertyInCategory(sModbus, TIdModbusServer, 'OnReadInputRegisters');
   RegisterPropertyInCategory(sModbus, TIdModbusServer, 'OnWriteCoils');
   RegisterPropertyInCategory(sModbus, TIdModbusServer, 'OnWriteRegisters');
+  RegisterPropertyInCategory(sModbus, TIdModbusServer, 'OnHeaderValidation');
 
   RegisterIDEPlugins;
 {$ENDIF}
