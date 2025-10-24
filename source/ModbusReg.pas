@@ -74,6 +74,7 @@ begin
   RegisterPropertyInCategory(sModbus, TIdModbusClient, 'Version');
 { Register the property categories for the client events }
   RegisterPropertyInCategory(sModbus, TIdModbusClient, 'OnHeaderValidation');
+  RegisterPropertyInCategory(sModbus, TIdModbusClient, 'OnReadDeviceIdentification');
   RegisterPropertyInCategory(sModbus, TIdModbusClient, 'OnReceiveBuffer');
   RegisterPropertyInCategory(sModbus, TIdModbusClient, 'OnResponseError');
   RegisterPropertyInCategory(sModbus, TIdModbusClient, 'OnResponseMismatch');

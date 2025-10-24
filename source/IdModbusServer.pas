@@ -63,6 +63,10 @@ type
   TModbusServerHeaderValidationEvent = procedure(const Sender: TIdContext;
     const ReceivedSize: Integer; const ExpectedSize: Integer;
     const RawBuffer: TIdBytes) of object;
+  TModBusDeviceIdentificationEvent = procedure(const Sender: TIdContext;
+    const ReadDeviceIDCode: Byte; const ObjectID: Byte; 
+    var DeviceIdentificationData: TModDeviceIdentificationData;
+    const RequestBuffer: TModBusRequestBuffer; var ErrorCode: Byte) of object;
 
 type
 {$I ModBusPlatforms.inc}
@@ -84,6 +88,7 @@ type
     FOnReadInputRegisters: TModBusRegisterReadEvent;
     FOnWriteCoils: TModBusCoilWriteEvent;
     FOnWriteRegisters: TModBusRegisterWriteEvent;
+    FOnReadDeviceIdentification: TModBusDeviceIdentificationEvent;
     FOnHeaderValidation: TModbusServerHeaderValidationEvent;
     FPause: Boolean;
     FTransportMode: TModBusTransportMode;
@@ -120,6 +125,9 @@ type
       const Data: TModCoilData; const RequestBuffer: TModBusRequestBuffer; var ErrorCode: Byte); virtual;
     procedure DoWriteRegisters(const AContext: TIdContext; const RegNr, Count: Integer;
       const Data: TModRegisterData; const RequestBuffer: TModBusRequestBuffer; var ErrorCode: Byte); virtual;
+    procedure DoReadDeviceIdentification(const AContext: TIdContext; const ReadDeviceIDCode: Byte;
+      const ObjectID: Byte; var DeviceIdentificationData: TModDeviceIdentificationData;
+      const RequestBuffer: TModBusRequestBuffer; var ErrorCode: Byte); virtual;
     procedure LogExceptionBuffer(const AContext: TIdContext; const Buffer: TModBusExceptionBuffer);
     procedure LogRequestBuffer(const AContext: TIdContext; const Buffer: TModBusRequestBuffer; const Size: Integer);
     procedure LogResponseBuffer(const AContext: TIdContext; const Buffer: TModBusResponseBuffer; const Size: Integer);
@@ -128,6 +136,9 @@ type
       const ReceiveBuffer: TModBusRequestBuffer);
     procedure SendResponse(const AContext: TIdContext; const ReceiveBuffer: TModBusRequestBuffer;
       const Data: TModRegisterData);
+    procedure SendDeviceIdentificationResponse(const AContext: TIdContext; 
+      const ReceiveBuffer: TModBusRequestBuffer; const ReadDeviceIDCode: Byte;
+      const DeviceIdentificationData: TModDeviceIdentificationData);
   public
     destructor Destroy(); override;
   { public properties }
@@ -147,14 +158,15 @@ type
     property Version: String read GetVersion write SetVersion stored False;
   { events }
     property OnError: TModBusErrorEvent read FOnError write FOnError;
+    property OnHeaderValidation: TModbusServerHeaderValidationEvent read FOnHeaderValidation write FOnHeaderValidation;
     property OnInvalidFunction: TModBusInvalidFunctionEvent read FOnInvalidFunction write FOnInvalidFunction;
     property OnReadCoils: TModBusCoilReadEvent read FOnReadCoils write FOnReadCoils;
+    property OnReadDeviceIdentification: TModBusDeviceIdentificationEvent read FOnReadDeviceIdentification write FOnReadDeviceIdentification;
     property OnReadHoldingRegisters: TModBusRegisterReadEvent read FOnReadHoldingRegisters write FOnReadHoldingRegisters;
     property OnReadInputBits: TModBusCoilReadEvent read FOnReadInputBits write FOnReadInputBits;
     property OnReadInputRegisters: TModBusRegisterReadEvent read FOnReadInputRegisters write FOnReadInputRegisters;
     property OnWriteCoils: TModBusCoilWriteEvent read FOnWriteCoils write FOnWriteCoils;
     property OnWriteRegisters: TModBusRegisterWriteEvent read FOnWriteRegisters write FOnWriteRegisters;
-    property OnHeaderValidation: TModbusServerHeaderValidationEvent read FOnHeaderValidation write FOnHeaderValidation;
   end; { TIdModBusServer }
 
 
@@ -185,6 +197,7 @@ begin
   FOnReadInputRegisters := nil;
   FOnWriteCoils := nil;
   FOnWriteRegisters := nil;
+  FOnReadDeviceIdentification := nil;
   FOnHeaderValidation := nil;
   FPause := False;
   FTransportMode := tmTCP;
@@ -338,6 +351,7 @@ var
   ReceiveBuffer: TModBusRequestBuffer;
   Data: TModRegisterData;
   Buffer: TIdBytes;
+  DeviceIDData: TModDeviceIdentificationData;
 begin
 { Initialize all register data to 0 }
   FillChar(Data[0], SizeOf(Data), 0);
@@ -551,6 +565,39 @@ begin
               SendError(AContext, ErrorCode, ReceiveBuffer);
           end;
         end;
+      mbfReadDeviceIdentification:
+        begin
+          // Function Code 43 (0x2B) - Read Device Identification
+          // Check MEI Type (should be 0x0E for Read Device Identification)
+          if (ReceiveBuffer.MBPData[0] <> mbMEITypeReadDeviceIdentification) then
+            // Invalid MEI Type - send illegal data value error
+            SendError(AContext, mbeIllegalDataValue, ReceiveBuffer)
+          else
+          begin
+            // Read Device ID Code (byte 1)
+            iRegNr := ReceiveBuffer.MBPData[1]; // Using iRegNr as ReadDeviceIDCode
+            // Object ID (byte 2)
+            iCount := ReceiveBuffer.MBPData[2]; // Using iCount as ObjectID
+            
+            // Validate Read Device ID Code
+            if (iRegNr < mbReadDevIDBasic) or (iRegNr > mbReadDevIDSpecific) then
+              SendError(AContext, mbeIllegalDataValue, ReceiveBuffer)
+            else
+            begin
+              // Request device identification data from user
+              SetLength(DeviceIDData, 0);
+              ErrorCode := mbeOk;
+              DoReadDeviceIdentification(AContext, Byte(iRegNr), Byte(iCount), DeviceIDData, ReceiveBuffer, ErrorCode);
+              
+              if (ErrorCode = mbeOk) then
+                // Send successful response with device identification data
+                SendDeviceIdentificationResponse(AContext, ReceiveBuffer, Byte(iRegNr), DeviceIDData)
+              else
+                // Send error response
+                SendError(AContext, ErrorCode, ReceiveBuffer);
+            end;
+          end;
+        end;
     else
       if (ReceiveBuffer.FunctionCode <> 0) then
       begin
@@ -634,6 +681,16 @@ procedure TIdModBusServer.DoReadInputRegisters(const AContext: TIdContext;
 begin
   if Assigned(FOnReadInputRegisters) then
     FOnReadInputRegisters(AContext, RegNr, Count, Data, RequestBuffer, ErrorCode);
+end;
+
+
+procedure TIdModBusServer.DoReadDeviceIdentification(const AContext: TIdContext;
+  const ReadDeviceIDCode: Byte; const ObjectID: Byte; 
+  var DeviceIdentificationData: TModDeviceIdentificationData;
+  const RequestBuffer: TModBusRequestBuffer; var ErrorCode: Byte);
+begin
+  if Assigned(FOnReadDeviceIdentification) then
+    FOnReadDeviceIdentification(AContext, ReadDeviceIDCode, ObjectID, DeviceIdentificationData, RequestBuffer, ErrorCode);
 end;
 
 
@@ -785,6 +842,91 @@ begin
       SendError(AContext, mbeServerFailure, ReceiveBuffer);
       Exit;
     end;
+  end;
+end;
+
+
+procedure TIdModBusServer.SendDeviceIdentificationResponse(const AContext: TIdContext;
+  const ReceiveBuffer: TModBusRequestBuffer; const ReadDeviceIDCode: Byte;
+  const DeviceIdentificationData: TModDeviceIdentificationData);
+var
+  SendBuffer: TModBusResponseBuffer;
+  Buffer: TIdBytes;
+  Crc: Word;
+  BufferSize: Integer;
+  DataIndex: Integer;
+  ObjectCount: Integer;
+  i: Integer;
+  ObjectValueLength: Integer;
+begin
+  if Active then
+  begin
+    FillChar(SendBuffer, SizeOf(SendBuffer), 0);
+    SendBuffer.TCPHeader.TransactionID := ReceiveBuffer.TCPHeader.TransactionID;
+    SendBuffer.TCPHeader.ProtocolID := ReceiveBuffer.TCPHeader.ProtocolID;
+    SendBuffer.Header.UnitID := ReceiveBuffer.Header.UnitID;
+    SendBuffer.FunctionCode := ReceiveBuffer.FunctionCode;
+    
+    // MEI Type (always 0x0E for Read Device Identification)
+    SendBuffer.MBPData[0] := mbMEITypeReadDeviceIdentification;
+    // Read Device ID Code (echo from request)
+    SendBuffer.MBPData[1] := ReadDeviceIDCode;
+    // Conformity Level (0x01 = Basic, 0x02 = Regular, 0x03 = Extended)
+    SendBuffer.MBPData[2] := $01; // Basic conformity level
+    // More Follows (0x00 = no more objects, 0xFF = more objects to follow)
+    SendBuffer.MBPData[3] := $00;
+    // Next Object ID (0x00 if More Follows = 0x00)
+    SendBuffer.MBPData[4] := $00;
+    // Number of Objects
+    ObjectCount := Length(DeviceIdentificationData);
+    SendBuffer.MBPData[5] := Byte(ObjectCount);
+    
+    // Build the objects list
+    DataIndex := 6;
+    for i := 0 to ObjectCount - 1 do
+    begin
+      // Object ID
+      SendBuffer.MBPData[DataIndex] := DeviceIdentificationData[i].ObjectID;
+      Inc(DataIndex);
+      
+      // Object Length
+      ObjectValueLength := Length(DeviceIdentificationData[i].ObjectValue);
+      SendBuffer.MBPData[DataIndex] := Byte(ObjectValueLength);
+      Inc(DataIndex);
+      
+      // Object Value (ASCII string)
+      if ObjectValueLength > 0 then
+      begin
+        Move(DeviceIdentificationData[i].ObjectValue[1], SendBuffer.MBPData[DataIndex], ObjectValueLength);
+        Inc(DataIndex, ObjectValueLength);
+      end;
+    end;
+    
+    // Set the RecLength (UnitID + FunctionCode + Data)
+    SendBuffer.TCPHeader.RecLength := Swap16(1 + 1 + DataIndex);
+    
+    if (FTransportMode = tmRTU) then
+    begin
+      // RTU mode: send without TCP header
+      BufferSize := Swap16(SendBuffer.TCPHeader.RecLength) + 1; // RecLength + UnitID
+      Buffer := RawToBytes(SendBuffer.Header, BufferSize);
+      Crc := CalculateCRC16(Buffer);
+    {$IFDEF DMB_DELPHIXE3}
+      SetLength(Buffer, IndyLength(Buffer) + 2);
+    {$ELSE}
+      SetLength(Buffer, Length(Buffer) + 2);
+    {$ENDIF}
+      Buffer[High(Buffer) - 1] := Lo(Crc);
+      Buffer[High(Buffer)] := Hi(Crc);
+    end
+    else
+    begin
+      // TCP mode: send with TCP header
+      Buffer := RawToBytes(SendBuffer, Swap16(SendBuffer.TCPHeader.RecLength) + MB_TCP_HEADER_SIZE);
+    end;
+    AContext.Connection.Socket.WriteDirect(Buffer);
+    if FLogEnabled then
+      LogResponseBuffer(AContext, SendBuffer, Swap16(SendBuffer.TCPHeader.RecLength) + MB_TCP_HEADER_SIZE);
   end;
 end;
 

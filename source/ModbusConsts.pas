@@ -53,6 +53,33 @@ const
   mbfMaskedWriteReg = $16;
   mbfReadWriteRegs = $17;
   mbfReadFiFoQueue = $18;
+  mbfReadDeviceIdentification = $2B;
+
+// Define constants for the MEI (Modbus Encapsulated Interface) Types
+const
+  mbMEITypeReadDeviceIdentification = $0E;
+
+// Define constants for Read Device ID codes
+const
+  mbReadDevIDBasic = $01;    // Basic device identification (stream access)
+  mbReadDevIDRegular = $02;  // Regular device identification (stream access)
+  mbReadDevIDExtended = $03; // Extended device identification (stream access)
+  mbReadDevIDSpecific = $04; // Specific identification object (individual access)
+
+// Define constants for Device Identification Object IDs
+const
+  // Basic Device Identification (Mandatory if supported)
+  mbObjIDVendorName = $00;
+  mbObjIDProductCode = $01;
+  mbObjIDMajorMinorRevision = $02;
+  // Regular Device Identification (Optional)
+  mbObjIDVendorUrl = $03;
+  mbObjIDProductName = $04;
+  mbObjIDModelName = $05;
+  mbObjIDUserApplicationName = $06;
+  // Extended Device Identification (Device-specific, range $80-$FF)
+  mbObjIDExtendedObjectStart = $80;
+  mbObjIDExtendedObjectEnd = $FF;
 
 // Define constants for the ModBus exceptions
 const
