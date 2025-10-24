@@ -20,10 +20,10 @@ A listing of implementations using the components is available in the [wiki](htt
 - Function Code 06 (0x06): Write Single Register
 - Function Code 15 (0x0F): Write Multiple Coils
 - Function Code 16 (0x10): Write Multiple Registers
-- Function Code 43 (0x2B): Read Device Identification (MEI Type 14) - *New in v2.0*
+- Function Code 17 (0x11): Report Slave ID
+- Function Code 22 (0x16): Write Masked Register
+- Function Code 43 (0x2B): Read Device Identification (MEI Type 14)
 
 ### Documentation
 - [Read Device Identification](docs/ReadDeviceIdentification.md) - Guide for Function Code 43
 - [RTU over TCP](docs/RTU_over_TCP.md) - RTU transport mode documentation
-- [Implementation Summary](docs/IMPLEMENTATION_SUMMARY.md) - Technical details of recent changes
-
