@@ -143,7 +143,7 @@ type
     property MinRegister: Word read FMinRegister write FMinRegister default 1;
     property TransportMode: TModBusTransportMode read FTransportMode write FTransportMode default tmTCP;
     property UnitID: Byte read FUnitID write FUnitID default MB_IGNORE_UNITID;
-    property ValidateHeader: TModBusHeaderValidation read FValidateHeader write FValidateHeader default hvException;
+    property ValidateHeader: TModBusHeaderValidation read FValidateHeader write FValidateHeader default hvDisabled;
     property Version: String read GetVersion write SetVersion stored False;
   { events }
     property OnError: TModBusErrorEvent read FOnError write FOnError;
@@ -188,7 +188,7 @@ begin
   FOnHeaderValidation := nil;
   FPause := False;
   FTransportMode := tmTCP;
-  FValidateHeader := hvException;
+  FValidateHeader := hvDisabled;
   FUnitID := MB_IGNORE_UNITID;
 end;
 
@@ -381,10 +381,7 @@ begin
           begin
             if (iCount <> Swap16(ReceiveBuffer.TCPHeader.RecLength) + MB_TCP_HEADER_SIZE) then
             begin
-              // Fire event for both hvException and hvIgnore modes
-              if (FValidateHeader = hvException) or (FValidateHeader = hvIgnore) then
-                DoHeaderValidation(AContext, iCount, Swap16(ReceiveBuffer.TCPHeader.RecLength) + MB_TCP_HEADER_SIZE, Buffer);
-              
+              DoHeaderValidation(AContext, iCount, Swap16(ReceiveBuffer.TCPHeader.RecLength) + MB_TCP_HEADER_SIZE, Buffer);
               if (FValidateHeader = hvException) then
                 raise EModbusHeaderValidation.CreateFmt(sHeaderValidationError, [iCount, Swap16(ReceiveBuffer.TCPHeader.RecLength) + MB_TCP_HEADER_SIZE]);
               // hvIgnore: just exit without raising exception
@@ -394,10 +391,7 @@ begin
           else
           begin
             // Not enough data for a valid MBAP header
-            // Fire event for both hvException and hvIgnore modes
-            if (FValidateHeader = hvException) or (FValidateHeader = hvIgnore) then
-              DoHeaderValidation(AContext, iCount, SizeOf(TModBusTCPHeader), Buffer);
-            
+            DoHeaderValidation(AContext, iCount, SizeOf(TModBusTCPHeader), Buffer);
             if (FValidateHeader = hvException) then
               raise EModbusHeaderValidation.CreateFmt(sHeaderValidationError, [iCount, SizeOf(TModBusTCPHeader)]);
             Exit;
