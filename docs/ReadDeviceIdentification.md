@@ -4,7 +4,9 @@
 
 The Modbus Function Code 43 (0x2B) with MEI Type 14 (Read Device Identification) allows clients to query a Modbus server for device identification information such as vendor name, product code, version, and other identification details.
 
-## Implementation
+This library provides both **server** and **client** implementations for Function Code 43.
+
+## Server Implementation
 
 To implement support for Read Device Identification in your Modbus server, you need to handle the `OnReadDeviceIdentification` event.
 
@@ -128,6 +130,86 @@ begin
   else
     // Invalid Read Device ID Code
     ErrorCode := mbeIllegalDataValue;
+  end;
+end;
+```
+
+## Client Implementation
+
+To query device identification from a Modbus server, use the `ReadDeviceIdentification` function in `TIdModbusClient`.
+
+### Method Signature
+
+```pascal
+function ReadDeviceIdentification(
+  const ReadDeviceIDCode: Byte; 
+  const ObjectID: Byte; 
+  out DeviceIDData: TModDeviceIdentificationData
+): Boolean;
+```
+
+### Parameters
+
+- `ReadDeviceIDCode`: The type of device identification to request:
+  - `mbReadDevIDBasic` ($01): Request basic device identification
+  - `mbReadDevIDRegular` ($02): Request regular device identification
+  - `mbReadDevIDExtended` ($03): Request extended device identification
+  - `mbReadDevIDSpecific` ($04): Request specific object by ID
+- `ObjectID`: The starting object ID (usually $00 for stream access, or specific object ID for individual access)
+- `DeviceIDData`: Output array that receives the device identification objects
+
+### Return Value
+
+Returns `True` if the request was successful and device identification data was received, `False` otherwise.
+
+### Client Usage Example
+
+```pascal
+procedure TfrmMain.btnReadDeviceIDClick(Sender: TObject);
+var
+  DeviceData: TModDeviceIdentificationData;
+  i: Integer;
+begin
+  // Connect to the Modbus server
+  ModbusClient.Host := '192.168.1.100';
+  ModbusClient.Port := 502;
+  
+  // Request basic device identification
+  if ModbusClient.ReadDeviceIdentification(mbReadDevIDBasic, $00, DeviceData) then
+  begin
+    // Process the received device identification
+    for i := 0 to High(DeviceData) do
+    begin
+      case DeviceData[i].ObjectID of
+        mbObjIDVendorName:
+          memoLog.Lines.Add('Vendor: ' + DeviceData[i].ObjectValue);
+        mbObjIDProductCode:
+          memoLog.Lines.Add('Product: ' + DeviceData[i].ObjectValue);
+        mbObjIDMajorMinorRevision:
+          memoLog.Lines.Add('Version: ' + DeviceData[i].ObjectValue);
+      else
+        memoLog.Lines.Add(Format('Object %d: %s', [DeviceData[i].ObjectID, DeviceData[i].ObjectValue]));
+      end;
+    end;
+  end
+  else
+    ShowMessage('Failed to read device identification');
+end;
+```
+
+### Reading Specific Objects
+
+To read a specific object by ID:
+
+```pascal
+var
+  DeviceData: TModDeviceIdentificationData;
+begin
+  // Request only the vendor name (object $00)
+  if ModbusClient.ReadDeviceIdentification(mbReadDevIDSpecific, mbObjIDVendorName, DeviceData) then
+  begin
+    if Length(DeviceData) > 0 then
+      ShowMessage('Vendor: ' + DeviceData[0].ObjectValue);
   end;
 end;
 ```
