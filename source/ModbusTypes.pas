@@ -85,6 +85,14 @@ type
 type
   EModbusHeaderValidation = class(Exception);
 
+type
+  TModDeviceIdentificationObject = record
+    ObjectID: Byte;
+    ObjectValue: String;
+  end;
+  
+  TModDeviceIdentificationData = array of TModDeviceIdentificationObject;
+
 
 implementation
 

@@ -42,14 +42,6 @@ type
   TModCoilData = array[0..MaxCoils] of ByteBool;
 
 type
-  TModDeviceIdentificationObject = record
-    ObjectID: Byte;
-    ObjectValue: String;
-  end;
-  
-  TModDeviceIdentificationData = array of TModDeviceIdentificationObject;
-
-type
   TModBusCoilReadEvent = procedure(const Sender: TIdContext;
     const RegNr, Count: Integer; var Data: TModCoilData;
     const RequestBuffer: TModBusRequestBuffer; var ErrorCode: Byte) of object;
@@ -578,10 +570,8 @@ begin
           // Function Code 43 (0x2B) - Read Device Identification
           // Check MEI Type (should be 0x0E for Read Device Identification)
           if (ReceiveBuffer.MBPData[0] <> mbMEITypeReadDeviceIdentification) then
-          begin
             // Invalid MEI Type - send illegal data value error
-            SendError(AContext, mbeIllegalDataValue, ReceiveBuffer);
-          end
+            SendError(AContext, mbeIllegalDataValue, ReceiveBuffer)
           else
           begin
             // Read Device ID Code (byte 1)
@@ -591,9 +581,7 @@ begin
             
             // Validate Read Device ID Code
             if (iRegNr < mbReadDevIDBasic) or (iRegNr > mbReadDevIDSpecific) then
-            begin
-              SendError(AContext, mbeIllegalDataValue, ReceiveBuffer);
-            end
+              SendError(AContext, mbeIllegalDataValue, ReceiveBuffer)
             else
             begin
               // Request device identification data from user
@@ -602,15 +590,11 @@ begin
               DoReadDeviceIdentification(AContext, Byte(iRegNr), Byte(iCount), DeviceIDData, ReceiveBuffer, ErrorCode);
               
               if (ErrorCode = mbeOk) then
-              begin
                 // Send successful response with device identification data
-                SendDeviceIdentificationResponse(AContext, ReceiveBuffer, Byte(iRegNr), DeviceIDData);
-              end
+                SendDeviceIdentificationResponse(AContext, ReceiveBuffer, Byte(iRegNr), DeviceIDData)
               else
-              begin
                 // Send error response
                 SendError(AContext, ErrorCode, ReceiveBuffer);
-              end;
             end;
           end;
         end;
