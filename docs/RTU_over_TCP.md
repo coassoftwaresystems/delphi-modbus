@@ -7,19 +7,43 @@ This document describes how to use the Modbus RTU over TCP transport mode added 
 ## Background
 
 Modbus supports two main transport protocols:
-- **Modbus TCP**: Uses standard TCP/IP without additional error checking (uses TCP's built-in error detection)
-- **Modbus RTU over TCP**: Wraps RTU frames (including CRC-16 error checking) in TCP packets
+- **Modbus TCP**: Uses MBAP (Modbus Application Protocol) header with TransactionID, ProtocolID, Length, and UnitID
+- **Modbus RTU over TCP**: Uses RTU framing (UnitID + Function + Data + CRC-16) wrapped in TCP packets
+
+### Protocol Frames
+
+**Modbus TCP Frame:**
+```
+[TransactionID: 2 bytes][ProtocolID: 2 bytes][Length: 2 bytes][UnitID: 1 byte][Function: 1 byte][Data: N bytes]
+```
+
+**Modbus RTU over TCP Frame:**
+```
+[UnitID: 1 byte][Function: 1 byte][Data: N bytes][CRC: 2 bytes]
+```
 
 ## Changes
 
-The `IncludeCrc` boolean property has been replaced with a more descriptive `TransportMode` enumerated property:
+The implementation uses separate header structures for the two transport modes:
 
 ```pascal
 type
   TModBusTransportMode = (tmTCP, tmRTU);
+
+type
+  TModBusTCPHeader = packed record
+    TransactionID: Word;
+    ProtocolID: Word;
+    RecLength: Word;
+  end;
+
+type
+  TModBusHeader = packed record
+    UnitID: Byte;
+  end;
 ```
 
-This property is available in both `TIdModBusClient` and `TIdModBusServer` components.
+Buffer structures include both headers, but only the relevant parts are sent/received based on the transport mode.
 
 ## Usage
 
@@ -69,27 +93,39 @@ The default value for `TransportMode` is `tmTCP`, ensuring backward compatibilit
 
 ## Technical Details
 
-When `TransportMode` is set to `tmRTU`:
+### Client Behavior
 
-### Client
-- Outgoing messages have a CRC-16 checksum appended (2 bytes, little-endian)
-- Incoming messages are validated for correct CRC-16 checksum
-- Invalid CRC causes the message to be rejected
+**TCP Mode:**
+- Sends: Full buffer with TCP header (6 bytes) + UnitID (1 byte) + Function + Data
+- Receives: Full buffer with TCP header + UnitID + Function + Data
+- Validates: ProtocolID and TransactionID matching
 
-### Server
-- Incoming requests are validated for correct CRC-16 checksum
-- Invalid CRC causes the request to be ignored
-- Outgoing responses and error messages have CRC-16 appended
+**RTU Mode:**
+- Sends: UnitID (1 byte) + Function + Data + CRC-16 (2 bytes)
+- Receives: UnitID + Function + Data + CRC-16
+- Validates: CRC-16 checksum
+
+### Server Behavior
+
+**TCP Mode:**
+- Receives: Full buffer with TCP header + UnitID + Function + Data
+- Validates: ProtocolID and UnitID (if configured)
+- Sends: Full buffer with TCP header + UnitID + Function + Data
+
+**RTU Mode:**
+- Receives: UnitID + Function + Data + CRC-16
+- Validates: CRC-16 checksum and UnitID (if configured)
+- Sends: UnitID + Function + Data + CRC-16
 
 ## CRC-16 Implementation
 
 The CRC-16 implementation uses the Modbus standard polynomial and is little-endian (LSB first):
-- Low byte is sent/received first
-- High byte is sent/received second
+- Low byte is sent/received first (at position N-2)
+- High byte is sent/received second (at position N-1)
 
 ## Migration from IncludeCrc
 
-If you were using the deprecated `IncludeCrc` property:
+The deprecated `IncludeCrc` property has been replaced with `TransportMode`:
 
 ```pascal
 // Old code
