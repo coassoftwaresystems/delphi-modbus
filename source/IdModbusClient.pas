@@ -94,9 +94,6 @@ type
     function ReadBits(const AModBusFunction: TModBusFunction; const RegNo, ABlockLength: Word;
       out RegisterData: array of Boolean): Boolean;
     procedure InitComponent; override;
-    function SendCommand(var ARequestBuffer: TModBusRequestBuffer;
-      const ABlockLength: Word; var Data: array of Word;
-      const AResponseHandler: TModbusClientHandleResponse = nil): Boolean;
     function SendCommandToSocket(const ARequestBuffer: TModBusRequestBuffer;
       var Data: array of Word; const AResponseHandler: TModbusClientHandleResponse = nil): Boolean;
   public
@@ -230,31 +227,6 @@ procedure TIdModBusClient.DoHeaderValidation(const ReceivedSize: Integer;
 begin
   if Assigned(FOnHeaderValidation) then
     FOnHeaderValidation(ReceivedSize, ExpectedSize, Buffer);
-end;
-
-
-function TIdModBusClient.SendCommand(var ARequestBuffer: TModBusRequestBuffer;
-  const ABlockLength: Word; var Data: array of Word;
-  const AResponseHandler: TModbusClientHandleResponse = nil): Boolean;
-var
-  BlockLength: Word;
-begin
-{ Perform function code specific operations }
-  case ARequestBuffer.FunctionCode of
-    mbfReadHoldingRegs,
-    mbfReadInputRegs:
-      begin
-        BlockLength := ABlockLength;
-        if (BlockLength > 125) then
-          BlockLength := 125; { Don't exceed max length }
-      { Initialise the data part }
-        ARequestBuffer.MBPData[2] := Hi(BlockLength);
-        ARequestBuffer.MBPData[3] := Lo(BlockLength);
-        ARequestBuffer.TCPHeader.RecLength := Swap16(6); { This includes UnitID/FuntionCode }
-      end;
-  end;
-
-  Result := SendCommandToSocket(ARequestBuffer, Data, AResponseHandler);
 end;
 
 
@@ -442,7 +414,7 @@ begin
     RequestBuffer.MBPData[2] := Hi(wBlockLength);
     RequestBuffer.MBPData[3] := Lo(wBlockLength);
     RequestBuffer.TCPHeader.RecLength := Swap16(6); { This includes UnitID/FuntionCode }
-    Result := SendCommand(RequestBuffer, wBlockLength, Data, HandleReadBitsResponse);
+    Result := SendCommandToSocket(RequestBuffer, Data, HandleReadBitsResponse);
     for i := 0 to (wBlockLength - 1) do
       RegisterData[i] := (Data[i] = 1);
   finally
@@ -481,6 +453,7 @@ var
   Data: array of Word;
   bNewConnection: Boolean;
   RequestBuffer: TModbusRequestBuffer;
+  wBlockLength: Word;
 begin
   bNewConnection := False;
   if FAutoConnect and not Connected then
@@ -493,7 +466,14 @@ begin
     SetLength(Data, Blocks);
     FillChar(Data[0], Length(Data), 0);
     RequestBuffer := BuildRequestBuffer(mbfReadHoldingRegs, RegNo - FBaseRegister);
-    Result := SendCommand(RequestBuffer, Blocks, Data, HandleReadHoldingRegistersResponse);
+    wBlockLength := Blocks;
+    if (wBlockLength > 125) then
+      wBlockLength := 125; { Don't exceed max length }
+  { Initialise the data part }
+    RequestBuffer.MBPData[2] := Hi(wBlockLength);
+    RequestBuffer.MBPData[3] := Lo(wBlockLength);
+    RequestBuffer.TCPHeader.RecLength := Swap16(6); { This includes UnitID/FuntionCode }
+    Result := SendCommandToSocket(RequestBuffer, Data, HandleReadHoldingRegistersResponse);
     for i := Low(Data) to High(Data) do
       RegisterData[i] := Data[i];
   finally
@@ -535,8 +515,11 @@ end;
 function TIdModBusClient.ReadInputRegisters(const RegNo, Blocks: Word;
   var RegisterData: array of Word): Boolean;
 var
+  i: Integer;
+  Data: array of Word;
   bNewConnection: Boolean;
   RequestBuffer: TModbusRequestBuffer;
+  wBlockLength: Word;
 begin
   bNewConnection := False;
   if FAutoConnect and not Connected then
@@ -547,8 +530,19 @@ begin
 
   FillChar(RegisterData[0], Length(RegisterData), 0);
   try
+    SetLength(Data, Blocks);
+    FillChar(Data[0], Length(Data), 0);
     RequestBuffer := BuildRequestBuffer(mbfReadInputRegs, RegNo - FBaseRegister);
-    Result := SendCommand(RequestBuffer, Blocks, RegisterData, HandleReadInputRegistersResponse);
+    wBlockLength := Blocks;
+    if (wBlockLength > 125) then
+      wBlockLength := 125; { Don't exceed max length }
+  { Initialise the data part }
+    RequestBuffer.MBPData[2] := Hi(wBlockLength);
+    RequestBuffer.MBPData[3] := Lo(wBlockLength);
+    RequestBuffer.TCPHeader.RecLength := Swap16(6); { This includes UnitID/FuntionCode }
+    Result := SendCommandToSocket(RequestBuffer, Data, HandleReadInputRegistersResponse);
+    for i := Low(Data) to High(Data) do
+      RegisterData[i] := Data[i];
   finally
     if bNewConnection then
       DisConnect;
