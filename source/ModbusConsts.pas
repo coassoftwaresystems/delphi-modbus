@@ -51,7 +51,7 @@ const
   mbfReadFileRecord = $14;
   mbfWriteFileRecord = $15;
   mbfMaskedWriteReg = $16;
-  mbfReadWriteRegs = $17;
+  mbfReadWriteMultipleRegs = $17;
   mbfReadFiFoQueue = $18;
   mbfReadDeviceIdentification = $2B;
 

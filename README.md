@@ -22,6 +22,7 @@ A listing of implementations using the components is available in the [wiki](htt
 - Function Code 16 (0x10): Write Multiple Registers
 - Function Code 17 (0x11): Report Slave ID
 - Function Code 22 (0x16): Write Masked Register
+- Function Code 23 (0x17): Read/Write Multiple Registers
 - Function Code 43 (0x2B): Read Device Identification (MEI Type 14)
 - **Function Codes 65-72 (0x41-0x48)**: Private/User-Defined Functions
 - **Function Codes 100-110 (0x64-0x6E)**: Private/User-Defined Functions

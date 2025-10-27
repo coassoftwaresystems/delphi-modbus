@@ -3,7 +3,8 @@ Version 2.0.0
 - Added support for Delphi 13 Florence.
 - Added new Modbus client function:
   - 22 (0x16): Mask Write Register.
-  - 43 (0x2B): Read Device Identification (MEI Type 14)
+  - 23 (0x17): Read/Write Multiple Regiters.
+  - 43 (0x2B): Read Device Identification (MEI Type 14).
 - Added new property 'IncludeCrc' to TIdModbusClient, which appends CRC value at the end of the request.
 - Added new events in TIdModbusClient to log data in Send- and Receive buffers.
 - Added support for use of RTU over TCP/IP.
