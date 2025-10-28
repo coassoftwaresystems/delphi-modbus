@@ -92,6 +92,7 @@ type
   TModDeviceIdentificationData = array of TModDeviceIdentificationObject;
 
 type
+  EModbusSizeMismatch = class(Exception);
   EModbusHeaderValidation = class(Exception);
   EModbusInvalidPrivateFunction = class(Exception);
 

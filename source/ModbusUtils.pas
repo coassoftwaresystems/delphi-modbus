@@ -50,7 +50,7 @@ procedure PutRegistersIntoBuffer(const Buffer: PWord; const Count: Word; const D
 implementation
 
 uses
-  SysUtils, ModbusConsts;
+  SysUtils, ModbusConsts, ModbusStrConsts, ModbusTypes;
 
 const
   CRC16Table: array[0..255] of Word = (
@@ -146,7 +146,7 @@ var
   i: Integer;
 begin
   if (Length(Data) < ((Count div 16) - 1)) or (Length(Data) = 0) or (Count = 0) then
-    raise Exception.Create('GetCoilsFromBuffer: Data array length cannot be less then Count');
+    raise Exception.Create(sGetCoilsFromBufferDataArrayLengthMismatch);
 
   BytePtr := Buffer;
   BitMask := 1;
@@ -178,7 +178,7 @@ var
   i: Word;
 begin
   if (Length(Data) < ((Count div 16) - 1)) or (Length(Data) = 0) or (Count = 0) then
-    raise Exception.Create('PutCoilsIntoBuffer: Data array length cannot be less then Count');
+    raise EModbusSizeMismatch.Create(sPutCoilsIntoBufferDataArrayLengthMismatch);
 
   BytePtr := Buffer;
   BitMask := 1;
@@ -208,7 +208,7 @@ var
   i: Word;
 begin
   if (Length(Data) < (Count - 1)) or (Length(Data) = 0) or (Count = 0) then
-    raise Exception.Create('GetRegistersFromBuffer: Data array length cannot be less then Count');
+    raise EModbusSizeMismatch.Create(sGetRegistersFromBufferDataArrayLengthMismatch);
 
   WordPtr := Buffer;
   for i := 0 to (Count - 1) do
@@ -225,7 +225,7 @@ var
   i: Word;
 begin
   if (Length(Data) < (Count - 1)) or (Length(Data) = 0) or (Count = 0) then
-    raise Exception.Create('GetRegistersFromBuffer: Data array length cannot be less then Count');
+    raise EModbusSizeMismatch.Create(sGetReportFromBufferDataArrayLengthMismatch);
 
   WordPtr := Buffer;
   for i := 0 to (Count - 1) do
@@ -242,7 +242,7 @@ var
   i: Word;
 begin
   if (Length(Data) < (Count - 1)) or (Length(Data) = 0) or (Count = 0) then
-    raise Exception.Create('PutRegistersIntoBuffer: Data array length cannot be less then Count');
+    raise EModbusSizeMismatch.Create(sPutRegistersIntoBufferDataArrayLengthMismatch);
 
   WordPtr := Buffer;
   for i := 0 to (Count - 1) do

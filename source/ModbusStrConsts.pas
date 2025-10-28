@@ -32,9 +32,14 @@ unit ModbusStrConsts;
 interface
 
 resourcestring
+  sGetCoilsFromBufferDataArrayLengthMismatch = 'GetCoilsFromBuffer: Data array length cannot be less then Count';
+  sGetRegistersFromBufferDataArrayLengthMismatch = 'GetRegistersFromBuffer: Data array length cannot be less then Count';
+  sGetReportFromBufferDataArrayLengthMismatch = 'GetReportFromBuffer: Data array length cannot be less then Count';
   sHeaderValidationError = 'Modbus header validation failed: received %d bytes, expected %d bytes';
   sLogging = 'Logging';
   sModbus = 'Modbus';
+  sPutCoilsIntoBufferDataArrayLengthMismatch = 'PutCoilsIntoBuffer: Data array length cannot be less then Count';
+  sPutRegistersIntoBufferDataArrayLengthMismatch = 'PutRegistersIntoBuffer: Data array length cannot be less then Count';
 
 implementation
 
