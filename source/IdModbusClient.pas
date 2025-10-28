@@ -612,6 +612,7 @@ begin
     RequestBuffer.MBPData[7] := Lo(wWriteBlocks);
     RequestBuffer.MBPData[8] := WriteBlocks * SizeOf(Word);
     RequestBuffer.TCPHeader.RecLength := Swap16(11 + RequestBuffer.MbpData[8]); { This includes UnitID/FuntionCode }
+    PutRegistersIntoBuffer(@RequestBuffer.MBPData[9], WriteBlocks, WriteData);
 
   { Initialise the data part }
     Result := SendCommandToSocket(RequestBuffer, Data, HandleReadWriteMultipleRegistersResponse);
