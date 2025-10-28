@@ -77,6 +77,8 @@ type
       out RegisterData: array of Word);
     procedure HandleReadDeviceIdentificationResponse(const ResponseBuffer: TModBusResponseBuffer;
       out RegisterData: array of Word);
+    procedure HandleReadFifoQueueResponse(const ResponseBuffer: TModBusResponseBuffer;
+      out RegisterData: array of Word);
     procedure HandlePrivateFunctionResponse(const ResponseBuffer: TModBusResponseBuffer;
       out RegisterData: array of Word);
     procedure HandleReadWriteMultipleRegistersResponse(const ResponseBuffer: TModBusResponseBuffer;
@@ -106,6 +108,7 @@ type
     function ReadCoils(const RegNo: Word; const Blocks: Word; out RegisterData: array of Boolean): Boolean;
     function ReadDouble(const RegNo: Word; out Value: Double): Boolean;
     function ReadDWord(const RegNo: Word; out Value: DWord): Boolean;
+    function ReadFifoQueue(const FifoPointerAddress: Word; out Values: array of Word): Boolean;
     function ReadHoldingRegister(const RegNo: Word; out Value: Word): Boolean;
     function ReadHoldingRegisters(const RegNo: Word; const Blocks: Word; out RegisterData: array of Word): Boolean;
     function ReadInputBits(const RegNo: Word; const Blocks: Word; out RegisterData: array of Boolean): Boolean;
@@ -663,6 +666,29 @@ begin
 end;
 
 
+function TIdModBusClient.ReadFifoQueue(const FifoPointerAddress: Word;
+  out Values: array of Word): Boolean;
+var
+  bNewConnection: Boolean;
+  RequestBuffer: TModbusRequestBuffer;
+begin
+  bNewConnection := False;
+  if FAutoConnect and not Connected then
+  begin
+    Connect;
+    bNewConnection := True;
+  end;
+  FillChar(Values[0], Length(Values), 0);
+  try
+    RequestBuffer := BuildRequestBuffer(mbfReadFiFoQueue, FifoPointerAddress);
+    RequestBuffer.TCPHeader.RecLength := Swap16(4); { This includes UnitID/FuntionCode }
+    Result := SendCommandToSocket(RequestBuffer, Values, HandleReadFifoQueueResponse);
+  finally
+    if bNewConnection then
+      DisConnect;
+  end;end;
+
+
 function TIdModbusClient.ReadSingle(const RegNo: Word; out Value: Single): Boolean;
 var
   Buffer: array[0..1] of Word;
@@ -738,6 +764,19 @@ var
 begin
   for i := 0 to Min(High(RegisterData), Swap16(ResponseBuffer.TCPHeader.RecLength) - 3) do
     RegisterData[i] := ResponseBuffer.MBPData[i];
+end;
+
+
+procedure TIdModBusClient.HandleReadFifoQueueResponse(
+  const ResponseBuffer: TModBusResponseBuffer; out RegisterData: array of Word);
+var
+  FifoCount: Word;
+begin
+  WordRec(FifoCount).Hi := ResponseBuffer.MBPData[0];
+  WordRec(FifoCount).Lo := ResponseBuffer.MBPData[1];
+  if (FifoCount > 125) then
+    FifoCount := 125;
+  GetRegistersFromBuffer(@ResponseBuffer.MBPData[2], FifoCount, RegisterData);
 end;
 
 

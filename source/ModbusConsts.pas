@@ -97,6 +97,7 @@ const
   mbeServerFailure = $04;
   mbeAcknowledge = $05;
   mbeServerBusy = $06;
+  mbeMemoryParityError = $08;
   mbeGatewayPathNotAvailable = $0A;
   mbeGatewayNoResponseFromTarget = $0B;
 

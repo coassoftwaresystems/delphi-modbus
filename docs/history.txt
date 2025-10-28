@@ -4,6 +4,7 @@ Version 2.0.0
 - Added new Modbus client function:
   - 22 (0x16): Mask Write Register.
   - 23 (0x17): Read/Write Multiple Regiters.
+  - 24 (0x18): Read FIFO Queue.
   - 43 (0x2B): Read Device Identification (MEI Type 14).
 - Added new property 'IncludeCrc' to TIdModbusClient, which appends CRC value at the end of the request.
 - Added new events in TIdModbusClient to log data in Send- and Receive buffers.
