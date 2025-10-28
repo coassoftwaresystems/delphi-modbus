@@ -1,8 +1,5 @@
 Version 2.0.0
 =================================
-- Fix: IdModbusClient - prevent writing data beyond the size of the response buffer.
-- Fix: IdModbusClient - clear the input buffer before sending a new request.
-- Fix: support for recent version of Lazarus with FPC.
 - Added support for Delphi 13 Florence.
 - Added new Modbus client function:
   - 22 (0x16): Mask Write Register.
@@ -14,6 +11,9 @@ Version 2.0.0
 - Added new property 'TransportMode' to support use of RTU over TCP/IP.
 - Added new property 'ValidateHeader' to validate response header and match
   received buffer against reported buffer length in Modbus header.
+- Fix: IdModbusClient - prevent writing data beyond the size of the response buffer.
+- Fix: IdModbusClient - clear the input buffer before sending a new request.
+- Fix: support for recent version of Lazarus with FPC.
 - Several refactorings:
   - Changed folder structure / separate folder for packages per Delphi version.
   - Drop support for old Delphi versions (before 2007) and support for Indy 9.
