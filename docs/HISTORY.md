@@ -8,6 +8,7 @@ Version 2.0.0
   - 43 (0x2B): Read Device Identification (MEI Type 14).
 - Added support for sending private Modbus commands.
 - Added new events in TIdModbusClient to log data in Send- and Receive buffers.
+- Added new property 'DisconnectOnCommandTimeout' to disconnect client on response timeout.
 - Added new property 'TransportMode' to support use of RTU over TCP/IP.
 - Added new property 'ValidateHeader' to validate response header and match
   received buffer against reported buffer length in Modbus header.

@@ -54,6 +54,7 @@ type
   private
     FAutoConnect: Boolean;
     FBaseRegister: Word;
+    FDisconnectOnCommandTimeout: Boolean;
     FLock: TCriticalSection;
     FTransportMode: TModBusTransportMode;
     FValidateHeader: TModBusHeaderValidation;
@@ -126,7 +127,7 @@ type
     function ReportSlaveID(const Blocks: Word; out RegisterData: array of Word): Boolean;
     function ReadDeviceIdentification(const ReadDeviceIDCode: Byte; const ObjectID: Byte; 
       out DeviceIDData: TModDeviceIdentificationData): Boolean;
-    procedure SafeClose;
+    procedure SafeDisconnect;
     function WriteCoil(const RegNo: Word; const Value: Boolean): Boolean;
     function WriteCoils(const RegNo: Word; const Blocks: Word; const RegisterData: array of Boolean): Boolean;
     function WriteRegister(const RegNo: Word; const Value: Word): Boolean;
@@ -141,6 +142,7 @@ type
   published
     property AutoConnect: Boolean read FAutoConnect write FAutoConnect default True;
     property BaseRegister: Word read FBaseRegister write FBaseRegister default 1;
+    property DisconnectOnCommandTimeout: Boolean read FDisconnectOnCommandTimeout write FDisconnectOnCommandTimeout default False;
     property ReadTimeout: Integer read FReadTimeout write FReadTimeout default 0;
     property Port default MB_PORT;
     property TimeOut: Cardinal read FTimeOut write FTimeout default 15000;
@@ -223,7 +225,7 @@ end;
 
 destructor TIdModBusClient.Destroy;
 begin
-  SafeClose;
+  SafeDisconnect;
   FLock.Free;
   inherited;
 end;
@@ -309,8 +311,11 @@ begin
 end;
 
 
-procedure TIdModBusClient.SafeClose;
+procedure TIdModBusClient.SafeDisconnect;
 begin
+  if (csDesigning in ComponentState) then
+    Exit;
+
   FLock.Enter;
   try
     try
@@ -376,9 +381,12 @@ begin
       IOHandler.CheckForDataOnSource(FReadTimeout);
       if (Now > dtTimeOut) then
       begin
+        if (FDisconnectOnCommandTimeout) then
+          TThread.Queue(nil, SafeDisconnect);
         Result := False;
         Exit;
       end;
+      Sleep(1);
     end;
   end;
 
@@ -517,7 +525,7 @@ begin
       RegisterData[i] := (Data[i] = 1);
   finally
     if bNewConnection then
-      DisConnect;
+      SafeDisconnect;
   end;
 end;
 
@@ -576,7 +584,7 @@ begin
       RegisterData[i] := Data[i];
   finally
     if bNewConnection then
-      DisConnect;
+      SafeDisconnect;
   end;
 end;
 
@@ -643,7 +651,7 @@ begin
       RegisterData[i] := Data[i];
   finally
     if bNewConnection then
-      DisConnect;
+      SafeDisconnect;
   end;
 end;
 
@@ -710,7 +718,7 @@ begin
       RegisterData[i] := Data[i];
   finally
     if bNewConnection then
-      DisConnect;
+      SafeDisconnect;
   end;
 end;
 
@@ -776,7 +784,7 @@ begin
     Result := SendCommandToSocket(RequestBuffer, Values, HandleReadFifoQueueResponse);
   finally
     if bNewConnection then
-      DisConnect;
+      SafeDisconnect;
   end;end;
 
 
@@ -843,7 +851,7 @@ begin
     Result := SendCommandToSocket(RequestBuffer, RegisterData, HandleReportSlaveIDResponse);
   finally
     if bNewConnection then
-      DisConnect;
+      SafeDisconnect;
   end;
 end;
 
@@ -970,7 +978,7 @@ begin
     end;
   finally
     if bNewConnection then
-      DisConnect;
+      SafeDisconnect;
   end;
 end;
 
@@ -1073,7 +1081,7 @@ begin
     Result := SendCommandToSocket(RequestBuffer, Data);
   finally
     if bNewConnection then
-      DisConnect;
+      SafeDisconnect;
   end;
 end;
 
@@ -1103,7 +1111,7 @@ begin
     Result := SendCommandToSocket(RequestBuffer, Data);
   finally
     if bNewConnection then
-      DisConnect;
+      SafeDisconnect;
   end;
 end;
 
@@ -1142,7 +1150,7 @@ begin
     Result := SendCommandToSocket(RequestBuffer, Data);
   finally
     if bNewConnection then
-      DisConnect;
+      SafeDisconnect;
   end;
 end;
 
@@ -1177,7 +1185,7 @@ begin
     Result := SendCommandToSocket(RequestBuffer, Data);
   finally
     if bNewConnection then
-      DisConnect;
+      SafeDisconnect;
   end;
 end;
 
@@ -1220,7 +1228,7 @@ begin
     Result := SendCommandToSocket(RequestBuffer, Data);
   finally
     if bNewConnection then
-      DisConnect;
+      SafeDisconnect;
   end;
 end;
 
@@ -1290,7 +1298,7 @@ begin
     end;
   finally
     if bNewConnection then
-      DisConnect;
+      SafeDisconnect;
   end;
 end;
 
