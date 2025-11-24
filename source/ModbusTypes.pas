@@ -38,7 +38,7 @@ type
   TModBusFunction = Byte;
 
 type
-  TModBusTransportMode = (tmTCP, tmRTU);
+  TModBusTransportMode = (tmTCP, tmRTUoverTCP);
 
 type
   TModBusHeaderValidation = (hvDisabled, hvException, hvIgnore);

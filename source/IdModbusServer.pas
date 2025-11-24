@@ -382,7 +382,7 @@ begin
     iCount := Length(Buffer);
     if (iCount > 0) then
     begin
-      if (FTransportMode = tmRTU) then
+      if (FTransportMode = tmRTUoverTCP) then
       begin
         // RTU mode: validate CRC and parse without TCP header
         if (iCount >= 2) then
@@ -768,7 +768,7 @@ begin
     SendBuffer.ExceptionCode := ErrorCode;
     SendBuffer.TCPHeader.RecLength := Swap16(3);
 
-    if (FTransportMode = tmRTU) then
+    if (FTransportMode = tmRTUoverTCP) then
     begin
       // RTU mode: send without TCP header
       BufferSize := 1 + 1 + 1; // UnitID + ExceptionFunction + ExceptionCode
@@ -853,7 +853,7 @@ begin
     { Send buffer if Request is Valid }
     if ValidRequest then
     begin
-      if (FTransportMode = tmRTU) then
+      if (FTransportMode = tmRTUoverTCP) then
       begin
         // RTU mode: send without TCP header
         BufferSize := Swap16(SendBuffer.TCPHeader.RecLength) + 1; // RecLength + UnitID
@@ -945,7 +945,7 @@ begin
     // Set the RecLength (UnitID + FunctionCode + Data)
     SendBuffer.TCPHeader.RecLength := Swap16(1 + 1 + DataIndex);
     
-    if (FTransportMode = tmRTU) then
+    if (FTransportMode = tmRTUoverTCP) then
     begin
       // RTU mode: send without TCP header
       BufferSize := Swap16(SendBuffer.TCPHeader.RecLength) + 1; // RecLength + UnitID
@@ -995,7 +995,7 @@ begin
     // Set the RecLength (UnitID + FunctionCode + Data)
     SendBuffer.TCPHeader.RecLength := Swap16(1 + 1 + ResponseDataSize);
     
-    if (FTransportMode = tmRTU) then
+    if (FTransportMode = tmRTUoverTCP) then
     begin
       // RTU mode: send without TCP header
       BufferSize := Swap16(SendBuffer.TCPHeader.RecLength) + 1; // RecLength + UnitID

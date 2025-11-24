@@ -31,7 +31,8 @@ unit IdModBusClient;
 interface
 
 uses
-  Classes, SysUtils, ModBusConsts, ModbusTypes, Types, IdGlobal, IdTCPClient;
+  Classes, SysUtils, ModBusConsts, ModbusTypes, Types, IdGlobal, IdTCPClient,
+  SyncObjs;
 
 type
   TModBusClientErrorEvent = procedure(const FunctionCode: Byte;
@@ -53,6 +54,7 @@ type
   private
     FAutoConnect: Boolean;
     FBaseRegister: Word;
+    FLock: TCriticalSection;
     FTransportMode: TModBusTransportMode;
     FValidateHeader: TModBusHeaderValidation;
     FOnSendBuffer: TModbusClientSendBufferEvent;
@@ -103,6 +105,8 @@ type
   public
     property LastTransactionID: Word read FLastTransactionID;
   { public methods }
+    constructor Create(AOwner: TComponent);
+    destructor Destroy; override;
     procedure Connect; override;
     function ReadCoil(const RegNo: Word; out Value: Boolean): Boolean;
     function ReadCoils(const RegNo: Word; const Blocks: Word; out RegisterData: array of Boolean): Boolean;
@@ -122,6 +126,7 @@ type
     function ReportSlaveID(const Blocks: Word; out RegisterData: array of Word): Boolean;
     function ReadDeviceIdentification(const ReadDeviceIDCode: Byte; const ObjectID: Byte; 
       out DeviceIDData: TModDeviceIdentificationData): Boolean;
+    procedure SafeClose;
     function WriteCoil(const RegNo: Word; const Value: Boolean): Boolean;
     function WriteCoils(const RegNo: Word; const Blocks: Word; const RegisterData: array of Boolean): Boolean;
     function WriteRegister(const RegNo: Word; const Value: Word): Boolean;
@@ -157,6 +162,48 @@ implementation
 uses
   ModbusUtils, Math, ModbusStrConsts;
 
+type
+  TResponseErrorThread = class(TThread)
+  private
+    FFunctionCode: Byte;
+    FErrorCode: Byte;
+    FResponseBuffer: TModBusResponseBuffer;
+    FOnResponseError: TModbusClientErrorEvent;
+    procedure DoResponseError;
+  protected
+    procedure Execute; override;
+  public
+    constructor Create(const FunctionCode: Byte; const ErrorCode: Byte;
+      const ResponseBuffer: TModBusResponseBuffer;
+      const OnResponseError: TModbusClientErrorEvent); reintroduce;
+  end;
+
+
+{ TResponseErrorThread }
+
+constructor TResponseErrorThread.Create(const FunctionCode, ErrorCode: Byte;
+  const ResponseBuffer: TModBusResponseBuffer; const OnResponseError: TModbusClientErrorEvent);
+begin
+  inherited Create(true);
+  FFunctionCode := FunctionCode;
+  FErrorCode := ErrorCode;
+  FResponseBuffer := ResponseBuffer;
+  FOnResponseError := OnResponseError;
+  Resume;
+end;
+
+
+procedure TResponseErrorThread.DoResponseError;
+begin
+  if Assigned(FOnResponseError) then
+    FOnResponseError(FFunctionCode, FErrorCode, FResponseBuffer);
+end;
+
+
+procedure TResponseErrorThread.Execute;
+begin
+  Synchronize(DoResponseError);
+end;
 
 { TIdModBusClient }
 
@@ -164,6 +211,21 @@ procedure TIdModBusClient.Connect;
 begin
   inherited;
   FLastTransactionID := 0;
+end;
+
+
+constructor TIdModBusClient.Create(AOwner: TComponent);
+begin
+  inherited;
+  FLock := TCriticalSection.Create;
+end;
+
+
+destructor TIdModBusClient.Destroy;
+begin
+  SafeClose;
+  FLock.Free;
+  inherited;
 end;
 
 
@@ -216,9 +278,18 @@ end;
 
 procedure TIdModBusClient.DoResponseError(const FunctionCode: Byte; const ErrorCode: Byte;
   const ResponseBuffer: TModBusResponseBuffer);
+var
+  Thread: TResponseErrorThread;
 begin
   if Assigned(FOnResponseError) then
-    FOnResponseError(FunctionCode, ErrorCode, ResponseBuffer);
+  begin
+    Thread := TResponseErrorThread.Create(FunctionCode, ErrorCode, ResponseBuffer, FOnResponseError);
+    try
+      Thread.WaitFor;
+    finally
+      Thread.Destroy;
+    end;
+  end;
 end;
 
 
@@ -230,11 +301,30 @@ begin
 end;
 
 
-procedure TIdModBusClient.DoHeaderValidation(const ReceivedSize: Integer; 
+procedure TIdModBusClient.DoHeaderValidation(const ReceivedSize: Integer;
   const ExpectedSize: Integer; const Buffer: TIdBytes);
 begin
   if Assigned(FOnHeaderValidation) then
     FOnHeaderValidation(ReceivedSize, ExpectedSize, Buffer);
+end;
+
+
+procedure TIdModBusClient.SafeClose;
+begin
+  FLock.Enter;
+  try
+    try
+      if Connected then
+      begin
+        IOHandler.InputBuffer.Clear;
+        IOHandler.CloseGracefully;
+      end;
+    except
+      // Intentionally ignore exceptions here
+    end;
+  finally
+    FLock.Leave;
+  end;
 end;
 
 
@@ -254,7 +344,7 @@ begin
   if Connected then
     IOHandler.InputBuffer.Clear;
 { Writeout the data to the connection }
-  if (FTransportMode = tmRTU) then
+  if (FTransportMode = tmRTUoverTCP) then
   begin
     // RTU mode: skip TCP header, send UnitID + FunctionCode + Data + CRC
     BufferSize := 1 + 1 + SizeOf(ARequestBuffer.MBPData); // UnitID + FunctionCode + Data
@@ -296,7 +386,7 @@ begin
   iSize := IOHandler.InputBuffer.Size;
   IOHandler.ReadBytes(ReceiveBuffer, iSize);
 
-  if (FTransportMode = tmRTU) then
+  if (FTransportMode = tmRTUoverTCP) then
   begin
     // RTU mode: validate CRC and parse without TCP header
     if (iSize >= 2) then
@@ -901,8 +991,13 @@ function TIdModBusClient.WriteDouble(const RegNo: Word; const Value: Double): Bo
 var
   Buffer: array[0..3] of Word;
 begin
-  Move(Value, Buffer, SizeOf(Value));
-  Result := WriteRegisters(RegNo, Buffer);
+  if (SizeOf(Buffer) >= SizeOf(Value)) then
+  begin
+    Move(Value, Buffer, SizeOf(Value));
+    Result := WriteRegisters(RegNo, Buffer);
+  end
+  else
+    Result := False;
 end;
 
 
@@ -920,8 +1015,13 @@ function TIdModBusClient.WriteSingle(const RegNo: Word; const Value: Single): Bo
 var
   Buffer: array[0..1] of Word;
 begin
-  Move(Value, Buffer, SizeOf(Value));
-  Result := WriteRegisters(RegNo, Buffer);
+  if (SizeOf(Buffer) >= SizeOf(Value)) then
+  begin
+    Result := WriteRegisters(RegNo, Buffer);
+    Move(Value, Buffer[0], SizeOf(Value));
+  end
+  else
+    Result := False;
 end;
 
 
@@ -936,7 +1036,7 @@ begin
   begin
     SetLength(Buffer, Round((Length(Text) / 2) + 0.1));
     FillChar(Buffer[0], Length(Buffer), 0);
-    for i := 0 to Length(Buffer) do
+    for i := 0 to (Length(Buffer) - 1) do
     begin
       iIndex := (i * 2) + 1;
       if (iIndex <= Length(Text)) then
