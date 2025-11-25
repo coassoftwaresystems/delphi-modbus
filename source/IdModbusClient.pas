@@ -1001,7 +1001,7 @@ var
 begin
   if (SizeOf(Buffer) >= SizeOf(Value)) then
   begin
-    Move(Value, Buffer, SizeOf(Value));
+    Move(Value, Buffer[0], SizeOf(Value));
     Result := WriteRegisters(RegNo, Buffer);
   end
   else
@@ -1025,8 +1025,8 @@ var
 begin
   if (SizeOf(Buffer) >= SizeOf(Value)) then
   begin
-    Result := WriteRegisters(RegNo, Buffer);
     Move(Value, Buffer[0], SizeOf(Value));
+    Result := WriteRegisters(RegNo, Buffer);
   end
   else
     Result := False;
