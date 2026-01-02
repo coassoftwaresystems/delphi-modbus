@@ -106,7 +106,6 @@ type
   public
     property LastTransactionID: Word read FLastTransactionID;
   { public methods }
-    constructor Create(AOwner: TComponent);
     destructor Destroy; override;
     procedure Connect; override;
     function ReadCoil(const RegNo: Word; out Value: Boolean): Boolean;
@@ -216,17 +215,11 @@ begin
 end;
 
 
-constructor TIdModBusClient.Create(AOwner: TComponent);
-begin
-  inherited;
-  FLock := TCriticalSection.Create;
-end;
-
-
 destructor TIdModBusClient.Destroy;
 begin
   SafeDisconnect;
-  FLock.Free;
+  if Assigned(FLock) then
+    FLock.Free;
   inherited;
 end;
 
@@ -234,6 +227,7 @@ end;
 procedure TIdModBusClient.InitComponent;
 begin
   inherited;
+  FLock := TCriticalSection.Create;
   FAutoConnect := True;
   FBaseRegister := 1;
   FTransportMode := tmTCP;
@@ -313,7 +307,7 @@ end;
 
 procedure TIdModBusClient.SafeDisconnect;
 begin
-  if (csDesigning in ComponentState) then
+  if (not Assigned(FLock)) or (csDesigning in ComponentState) then
     Exit;
 
   FLock.Enter;
@@ -561,6 +555,7 @@ var
   RequestBuffer: TModbusRequestBuffer;
   wBlockLength: Word;
 begin
+  FLock.Enter;
   bNewConnection := False;
   if FAutoConnect and not Connected then
   begin
