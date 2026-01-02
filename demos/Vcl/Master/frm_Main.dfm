@@ -11,10 +11,8 @@ object frmMain: TfrmMain
   Font.Height = -11
   Font.Name = 'MS Shell Dlg 2'
   Font.Style = []
-  OldCreateOrder = False
   Position = poScreenCenter
   Scaled = False
-  PixelsPerInch = 96
   TextHeight = 13
   object Label1: TLabel
     Left = 8
@@ -125,7 +123,6 @@ object frmMain: TfrmMain
   end
   object mctPLC: TIdModBusClient
     ConnectTimeout = 0
-    IPVersion = Id_IPv4
     Left = 480
     Top = 8
   end
