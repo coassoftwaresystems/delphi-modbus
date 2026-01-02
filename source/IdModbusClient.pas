@@ -555,7 +555,6 @@ var
   RequestBuffer: TModbusRequestBuffer;
   wBlockLength: Word;
 begin
-  FLock.Enter;
   bNewConnection := False;
   if FAutoConnect and not Connected then
   begin
